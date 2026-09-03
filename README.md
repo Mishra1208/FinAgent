@@ -8,8 +8,8 @@
 Every component of this project is documented step-by-step for easy learning and interview preparation inside the [`docs/`](./docs) folder:
 
 1. [**00 - Project Overview & System Architecture**](./docs/00_PROJECT_OVERVIEW_AND_ARCHITECTURE.md)
-2. *(Next: 01 - Data Ingestion & SEC 10-K Chunk Strategy)*
-3. *(Next: 02 - Hybrid RAG & Vector Store)*
+2. [**01 - Data Ingestion & SEC 10-K Chunk Strategy**](./docs/01_DATA_INGESTION_AND_CHUNK_STRATEGY.md)
+3. [**02 - Hybrid RAG & Vector Store (ChromaDB + BM25 + RRF)**](./docs/02_HYBRID_RAG_AND_VECTOR_STORE.md)
 4. *(Next: 03 - Deterministic Financial Math Tools)*
 5. *(Next: 04 - LangGraph Multi-Agent Workflow)*
 6. *(Next: 05 - Guardrails & Pydantic Structured Outputs)*
