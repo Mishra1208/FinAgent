@@ -19,6 +19,18 @@ Every component of this project is documented step-by-step for easy learning and
 
 ---
 
+## 🎓 Interactive React Code Explanation & Masterclass App
+We have built an interactive web app in [`code_explanation/`](./code_explanation) for visual code exploration and interview prep:
+
+```bash
+cd code_explanation
+npm install
+npm run dev
+```
+Open at: `http://localhost:5173`
+
+---
+
 ## 🚀 Quickstart & Verification
 
 ### 1. Run Complete Test Suite
