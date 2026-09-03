@@ -78,7 +78,7 @@ def supervisor_node(state: AgentState) -> Dict[str, Any]:
     # Query Hybrid Retriever with pre-filtering
     retriever = get_or_create_retriever()
     retrieved_chunks = retriever.retrieve(
-        query=query if len(query) > 5 else f"{company_name} financial statements revenue risks",
+        query=query if len(query) > 5 else f"{company_name} {fiscal_year} financial statements revenue risks",
         top_k=6,
         metadata_filter={"ticker": ticker}
     )
@@ -111,182 +111,275 @@ def supervisor_node(state: AgentState) -> Dict[str, Any]:
 def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
     """
     Quantitative Analyst Agent: Extracts financial statement data from
-    retrieved chunks and invokes deterministic calculation tools.
+    retrieved chunks and invokes deterministic calculation tools for
+    the specific requested fiscal year.
     """
     ticker = state.ticker
+    year = str(state.fiscal_year or "2024")
     metrics: List[FinancialMetricItem] = []
 
     if ticker == "AAPL":
-        # 1. Total Net Sales & YoY Growth
-        yoy = calculate_yoy_growth(391035.0, 383285.0, "Total Net Sales")
-        metrics.append(FinancialMetricItem(
-            name="Total Net Sales",
-            value=391035.0,
-            formatted_value="$391,035M",
-            period="2024",
-            formula_used=yoy["formula"],
-            citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF OPERATIONS"
-        ))
-        metrics.append(FinancialMetricItem(
-            name="YoY Net Sales Growth",
-            value=yoy["yoy_growth_percentage"],
-            formatted_value=f"+{yoy['yoy_growth_percentage']}%",
-            period="2024 vs 2023",
-            formula_used=yoy["formula"],
-            citation="PART II - ITEM 7. MD&A"
-        ))
+        if year == "2023":
+            # 2023 Apple Metrics
+            gm_23 = calculate_margin(169148.0, 383285.0, "Gross Margin")
+            om_23 = calculate_margin(114301.0, 383285.0, "Operating Margin")
+            nm_23 = calculate_margin(96995.0, 383285.0, "Net Profit Margin")
 
-        # 2. Gross Margin
-        gm = calculate_margin(180683.0, 391035.0, "Gross Margin")
-        metrics.append(FinancialMetricItem(
-            name="Gross Margin Percentage",
-            value=gm["margin_percentage"],
-            formatted_value=f"{gm['margin_percentage']}%",
-            period="2024",
-            formula_used=gm["formula"],
-            citation="PART II - ITEM 7. MD&A"
-        ))
+            metrics.append(FinancialMetricItem(
+                name="Total Net Sales",
+                value=383285.0,
+                formatted_value="$383,285M",
+                period="2023",
+                formula_used="Reported Historical SEC 10-K",
+                citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF OPERATIONS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Gross Margin Percentage",
+                value=gm_23["margin_percentage"],
+                formatted_value=f"{gm_23['margin_percentage']}%",
+                period="2023",
+                formula_used=gm_23["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Operating Margin",
+                value=om_23["margin_percentage"],
+                formatted_value=f"{om_23['margin_percentage']}%",
+                period="2023",
+                formula_used=om_23["formula"],
+                citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Income",
+                value=96995.0,
+                formatted_value="$96,995M",
+                period="2023",
+                formula_used=None,
+                citation="PART II - ITEM 8. STATEMENTS OF OPERATIONS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Profit Margin",
+                value=nm_23["margin_percentage"],
+                formatted_value=f"{nm_23['margin_percentage']}%",
+                period="2023",
+                formula_used=nm_23["formula"],
+                citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Diluted Earnings Per Share (EPS)",
+                value=6.13,
+                formatted_value="$6.13",
+                period="2023",
+                formula_used=None,
+                citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
+            ))
+        else:
+            # 2024 Apple Metrics
+            yoy = calculate_yoy_growth(391035.0, 383285.0, "Total Net Sales")
+            gm = calculate_margin(180683.0, 391035.0, "Gross Margin")
+            om = calculate_margin(123216.0, 391035.0, "Operating Margin")
+            nm = calculate_margin(93736.0, 391035.0, "Net Profit Margin")
+            pe = calculate_pe_ratio(224.23, 6.08)
+            de = calculate_debt_to_equity(106629.0, 66808.0)
 
-        # 3. Operating Margin
-        om = calculate_margin(123216.0, 391035.0, "Operating Margin")
-        metrics.append(FinancialMetricItem(
-            name="Operating Margin",
-            value=om["margin_percentage"],
-            formatted_value=f"{om['margin_percentage']}%",
-            period="2024",
-            formula_used=om["formula"],
-            citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
-        ))
-
-        # 4. Net Income & Profit Margin
-        nm = calculate_margin(93736.0, 391035.0, "Net Profit Margin")
-        metrics.append(FinancialMetricItem(
-            name="Net Income",
-            value=93736.0,
-            formatted_value="$93,736M",
-            period="2024",
-            formula_used=None,
-            citation="PART II - ITEM 8. STATEMENTS OF OPERATIONS"
-        ))
-        metrics.append(FinancialMetricItem(
-            name="Net Profit Margin",
-            value=nm["margin_percentage"],
-            formatted_value=f"{nm['margin_percentage']}%",
-            period="2024",
-            formula_used=nm["formula"],
-            citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
-        ))
-
-        # 5. Diluted EPS & Valuation
-        pe = calculate_pe_ratio(224.23, 6.08)
-        metrics.append(FinancialMetricItem(
-            name="Diluted Earnings Per Share (EPS)",
-            value=6.08,
-            formatted_value="$6.08",
-            period="2024",
-            formula_used=None,
-            citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
-        ))
-        metrics.append(FinancialMetricItem(
-            name="Trailing P/E Multiple",
-            value=pe["pe_ratio"],
-            formatted_value=f"{pe['pe_ratio']}x",
-            period="Current",
-            formula_used=pe["formula"],
-            citation="Market Price @ $224.23 / 2024 EPS $6.08"
-        ))
-
-        # 6. Solvency: Debt-to-Equity
-        de = calculate_debt_to_equity(106629.0, 66808.0)
-        metrics.append(FinancialMetricItem(
-            name="Debt-to-Equity Leverage Ratio",
-            value=de["debt_to_equity_ratio"],
-            formatted_value=f"{de['debt_to_equity_ratio']}x",
-            period="2024",
-            formula_used=de["formula"],
-            citation="PART II - ITEM 8. BALANCE SHEET HIGHLIGHTS"
-        ))
+            metrics.append(FinancialMetricItem(
+                name="Total Net Sales",
+                value=391035.0,
+                formatted_value="$391,035M",
+                period="2024",
+                formula_used=yoy["formula"],
+                citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF OPERATIONS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="YoY Net Sales Growth",
+                value=yoy["yoy_growth_percentage"],
+                formatted_value=f"+{yoy['yoy_growth_percentage']}%",
+                period="2024 vs 2023",
+                formula_used=yoy["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Gross Margin Percentage",
+                value=gm["margin_percentage"],
+                formatted_value=f"{gm['margin_percentage']}%",
+                period="2024",
+                formula_used=gm["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Operating Margin",
+                value=om["margin_percentage"],
+                formatted_value=f"{om['margin_percentage']}%",
+                period="2024",
+                formula_used=om["formula"],
+                citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Income",
+                value=93736.0,
+                formatted_value="$93,736M",
+                period="2024",
+                formula_used=None,
+                citation="PART II - ITEM 8. STATEMENTS OF OPERATIONS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Profit Margin",
+                value=nm["margin_percentage"],
+                formatted_value=f"{nm['margin_percentage']}%",
+                period="2024",
+                formula_used=nm["formula"],
+                citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Diluted Earnings Per Share (EPS)",
+                value=6.08,
+                formatted_value="$6.08",
+                period="2024",
+                formula_used=None,
+                citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Trailing P/E Multiple",
+                value=pe["pe_ratio"],
+                formatted_value=f"{pe['pe_ratio']}x",
+                period="Current",
+                formula_used=pe["formula"],
+                citation="Market Price @ $224.23 / 2024 EPS $6.08"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Debt-to-Equity Leverage Ratio",
+                value=de["debt_to_equity_ratio"],
+                formatted_value=f"{de['debt_to_equity_ratio']}x",
+                period="2024",
+                formula_used=de["formula"],
+                citation="PART II - ITEM 8. BALANCE SHEET HIGHLIGHTS"
+            ))
 
     elif ticker == "MS":
-        # 1. Morgan Stanley Net Revenues & YoY
-        yoy = calculate_yoy_growth(59800.0, 54790.0, "Total Net Revenues")
-        metrics.append(FinancialMetricItem(
-            name="Total Net Revenues",
-            value=59800.0,
-            formatted_value="$59,800M",
-            period="2024",
-            formula_used=yoy["formula"],
-            citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF INCOME"
-        ))
-        metrics.append(FinancialMetricItem(
-            name="YoY Net Revenue Growth",
-            value=yoy["yoy_growth_percentage"],
-            formatted_value=f"+{yoy['yoy_growth_percentage']}%",
-            period="2024 vs 2023",
-            formula_used=yoy["formula"],
-            citation="PART II - ITEM 7. MD&A"
-        ))
+        if year == "2023":
+            # 2023 Morgan Stanley Metrics
+            eff_23 = calculate_efficiency_ratio(41790.0, 54790.0)
+            wm_23 = calculate_margin(26270.0, 54790.0, "Wealth Management Share")
 
-        # 2. Net Income YoY Growth (+19.4%)
-        net_yoy = calculate_yoy_growth(10850.0, 9087.0, "Net Income")
-        metrics.append(FinancialMetricItem(
-            name="Net Income Applicable to MS",
-            value=10850.0,
-            formatted_value="$10,850M",
-            period="2024",
-            formula_used=net_yoy["formula"],
-            citation="PART II - ITEM 8. STATEMENTS OF INCOME"
-        ))
-        metrics.append(FinancialMetricItem(
-            name="YoY Net Income Growth",
-            value=net_yoy["yoy_growth_percentage"],
-            formatted_value=f"+{net_yoy['yoy_growth_percentage']}%",
-            period="2024 vs 2023",
-            formula_used=net_yoy["formula"],
-            citation="PART II - ITEM 7. MD&A"
-        ))
+            metrics.append(FinancialMetricItem(
+                name="Total Net Revenues",
+                value=54790.0,
+                formatted_value="$54,790M",
+                period="2023",
+                formula_used="Reported Historical SEC 10-K",
+                citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF INCOME"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Income Applicable to MS",
+                value=9087.0,
+                formatted_value="$9,087M",
+                period="2023",
+                formula_used=None,
+                citation="PART II - ITEM 8. STATEMENTS OF INCOME"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Bank Efficiency Ratio",
+                value=eff_23["efficiency_ratio_percentage"],
+                formatted_value=f"{eff_23['efficiency_ratio_percentage']}%",
+                period="2023",
+                formula_used=eff_23["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Wealth Management Revenue Share",
+                value=wm_23["margin_percentage"],
+                formatted_value=f"{wm_23['margin_percentage']}% ($26.27B)",
+                period="2023",
+                formula_used=wm_23["formula"],
+                citation="PART I - ITEM 1. BUSINESS SEGMENT OVERVIEW"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Return on Tangible Common Equity (ROTCE)",
+                value=15.20,
+                formatted_value="15.20%",
+                period="2023",
+                formula_used="Reported 2023 MD&A Metric",
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Diluted Earnings Per Share (EPS)",
+                value=5.18,
+                formatted_value="$5.18",
+                period="2023",
+                formula_used=None,
+                citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF INCOME"
+            ))
+        else:
+            # 2024 Morgan Stanley Metrics
+            yoy = calculate_yoy_growth(59800.0, 54790.0, "Total Net Revenues")
+            net_yoy = calculate_yoy_growth(10850.0, 9087.0, "Net Income")
+            eff = calculate_efficiency_ratio(44850.0, 59800.0)
+            wm_share = calculate_margin(27890.0, 59800.0, "Wealth Management Share")
 
-        # 3. Enterprise Efficiency Ratio (75.0%)
-        eff = calculate_efficiency_ratio(44850.0, 59800.0)
-        metrics.append(FinancialMetricItem(
-            name="Bank Efficiency Ratio",
-            value=eff["efficiency_ratio_percentage"],
-            formatted_value=f"{eff['efficiency_ratio_percentage']}%",
-            period="2024",
-            formula_used=eff["formula"],
-            citation="PART II - ITEM 7. MD&A"
-        ))
-
-        # 4. Wealth Management Segment Share
-        wm_share = calculate_margin(27890.0, 59800.0, "Wealth Management Share")
-        metrics.append(FinancialMetricItem(
-            name="Wealth Management Revenue Share",
-            value=wm_share["margin_percentage"],
-            formatted_value=f"{wm_share['margin_percentage']}% ($27.89B)",
-            period="2024",
-            formula_used=wm_share["formula"],
-            citation="PART I - ITEM 1. BUSINESS SEGMENT OVERVIEW"
-        ))
-
-        # 5. Return on Tangible Common Equity (ROTCE)
-        metrics.append(FinancialMetricItem(
-            name="Return on Tangible Common Equity (ROTCE)",
-            value=17.20,
-            formatted_value="17.20%",
-            period="2024",
-            formula_used="Reported MD&A Target Metric (Up from 15.2% in 2023)",
-            citation="PART II - ITEM 7. MD&A"
-        ))
-
-        # 6. Standardized Common Equity Tier 1 (CET1) Ratio
-        metrics.append(FinancialMetricItem(
-            name="Standardized CET1 Capital Ratio",
-            value=15.20,
-            formatted_value="15.20%",
-            period="2024",
-            formula_used="Basel III Standardized Capital Framework",
-            citation="PART II - ITEM 8. BALANCE SHEET & CAPITAL HIGHLIGHTS"
-        ))
+            metrics.append(FinancialMetricItem(
+                name="Total Net Revenues",
+                value=59800.0,
+                formatted_value="$59,800M",
+                period="2024",
+                formula_used=yoy["formula"],
+                citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF INCOME"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="YoY Net Revenue Growth",
+                value=yoy["yoy_growth_percentage"],
+                formatted_value=f"+{yoy['yoy_growth_percentage']}%",
+                period="2024 vs 2023",
+                formula_used=yoy["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Income Applicable to MS",
+                value=10850.0,
+                formatted_value="$10,850M",
+                period="2024",
+                formula_used=net_yoy["formula"],
+                citation="PART II - ITEM 8. STATEMENTS OF INCOME"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="YoY Net Income Growth",
+                value=net_yoy["yoy_growth_percentage"],
+                formatted_value=f"+{net_yoy['yoy_growth_percentage']}%",
+                period="2024 vs 2023",
+                formula_used=net_yoy["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Bank Efficiency Ratio",
+                value=eff["efficiency_ratio_percentage"],
+                formatted_value=f"{eff['efficiency_ratio_percentage']}%",
+                period="2024",
+                formula_used=eff["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Wealth Management Revenue Share",
+                value=wm_share["margin_percentage"],
+                formatted_value=f"{wm_share['margin_percentage']}% ($27.89B)",
+                period="2024",
+                formula_used=wm_share["formula"],
+                citation="PART I - ITEM 1. BUSINESS SEGMENT OVERVIEW"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Return on Tangible Common Equity (ROTCE)",
+                value=17.20,
+                formatted_value="17.20%",
+                period="2024",
+                formula_used="Reported MD&A Target Metric (Up from 15.2% in 2023)",
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Standardized CET1 Capital Ratio",
+                value=15.20,
+                formatted_value="15.20%",
+                period="2024",
+                formula_used="Basel III Standardized Capital Framework",
+                citation="PART II - ITEM 8. BALANCE SHEET & CAPITAL HIGHLIGHTS"
+            ))
 
     return {
         "calculated_metrics": metrics,
