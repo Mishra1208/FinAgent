@@ -1,7 +1,11 @@
 import os
 from typing import List, Dict, Any, Optional
 from langchain_core.documents import Document
-from langchain_community.vectorstores import Chroma
+
+try:
+    from langchain_chroma import Chroma
+except ImportError:
+    from langchain_community.vectorstores import Chroma
 
 try:
     from langchain_openai import OpenAIEmbeddings
