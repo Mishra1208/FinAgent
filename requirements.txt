@@ -1,0 +1,31 @@
+# Core LLM & Frameworks
+langchain>=0.2.14
+langchain-community>=0.2.12
+langchain-core>=0.2.33
+langchain-openai>=0.1.22
+langchain-text-splitters>=0.2.2
+langgraph>=0.2.14
+
+# Data Validation & Typing
+pydantic>=2.8.2
+pydantic-settings>=2.4.0
+
+# Vector Database & Hybrid Search
+chromadb>=0.5.5
+rank-bm25>=0.2.2
+
+# Document Parsing & Financial Data
+pypdf>=4.3.1
+pymupdf>=1.24.9
+pandas>=2.2.2
+yfinance>=0.2.41
+
+# Evaluation & Testing (LLM-as-a-Judge)
+ragas>=0.1.13
+pytest>=8.3.2
+
+# Serving & UI
+fastapi>=0.112.1
+uvicorn>=0.30.6
+streamlit>=1.37.1
+python-dotenv>=1.0.1

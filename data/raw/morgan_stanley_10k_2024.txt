@@ -1,0 +1,65 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+FORM 10-K
+
+ANNUAL REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934
+For the fiscal year ended December 31, 2024
+Commission File Number: 001-11758
+
+MORGAN STANLEY
+(Exact name of Registrant as specified in its charter)
+Ticker: MS | State of Incorporation: Delaware | CIK: 0000895421
+Headquarters: 1585 Broadway, New York, NY 10036
+
+================================================================================
+PART I - ITEM 1. BUSINESS & BUSINESS SEGMENT PERFORMANCE
+================================================================================
+Morgan Stanley is a global financial services firm providing investment banking, securities, wealth management, and investment management services.
+Fiscal 2024 Net Revenues by Business Segment:
+- Institutional Securities (Investment Banking, Equity Trading, Fixed Income): $26,180 million (compared to $23,110 million in 2023)
+- Wealth Management (Advisor-led, Self-directed, workplace wealth): $27,890 million (compared to $26,270 million in 2023)
+- Investment Management (Asset Management, Parametric, Eaton Vance): $5,730 million (compared to $5,410 million in 2023)
+
+Total Net Revenues for Fiscal Year 2024: $59,800 million (up 9.1% from $54,790 million in 2023).
+Total Client Assets in Wealth Management reached $5.4 trillion as of year-end 2024.
+
+================================================================================
+PART I - ITEM 1A. RISK FACTORS
+================================================================================
+1. Market Volatility and Macroeconomic Sensitivity:
+Net revenues in Institutional Securities and Investment Management are highly dependent on global market conditions, interest rate environments, equity trading volumes, and corporate M&A advisory activity. Prolonged market downturns could adversely affect advisory fees, underwriting spreads, and asset management performance fees.
+
+2. Cybersecurity, AI Security, and Technology Infrastructure Resilience:
+The Firm relies heavily on sophisticated technological platforms to process millions of complex financial transactions daily across global exchanges. Threats of cyber attacks, unauthorized data exposure, and vulnerabilities associated with adopting generative artificial intelligence systems represent critical operational risks.
+
+3. Stringent Capital, Liquidity, and Regulatory Mandates (Basel III / Dodd-Frank):
+The Firm is subject to strict regulatory supervision by the Federal Reserve, SEC, FINRA, and international regulatory bodies. Heightened capital requirements, stress testing mandates (CCAR), and compliance audits require substantial operational and compliance infrastructure.
+
+================================================================================
+PART II - ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS (MD&A)
+================================================================================
+Executive Overview:
+Fiscal Year 2024 results reflected strong momentum across both Wealth Management and Institutional Equities.
+- Net Income Applicable to Morgan Stanley was $10,850 million for 2024, compared to $9,087 million in 2023, representing a 19.4% increase.
+- Return on Tangible Common Equity (ROTCE) was 17.2% for 2024, compared to 15.2% in 2023.
+- Non-interest expenses for 2024 were $44,850 million, resulting in an enterprise Efficiency Ratio of 75.0%.
+
+================================================================================
+PART II - ITEM 8. FINANCIAL STATEMENTS AND CONSOLIDATED RESULTS
+================================================================================
+CONSOLIDATED STATEMENTS OF INCOME (in millions, except per share amounts):
+- Total Net Revenues: $59,800 (2024) | $54,790 (2023)
+- Compensation and Benefits Expense: $27,510 (2024) | $25,200 (2023)
+- Non-Compensation Expenses: $17,340 (2024) | $16,590 (2023)
+- Total Non-Interest Expenses: $44,850 (2024) | $41,790 (2023)
+- Income Before Taxes: $14,950 (2024) | $13,000 (2023)
+- Net Income Applicable to Morgan Stanley: $10,850 (2024) | $9,087 (2023)
+- Diluted Earnings Per Share (EPS): $6.65 (2024) | $5.18 (2023)
+- Common Dividend Per Share: $3.40 (2024) | $3.25 (2023)
+
+CONSOLIDATED BALANCE SHEET & CAPITAL HIGHLIGHTS (in millions):
+- Total Assets: $1,220,000 million ($1.22 Trillion)
+- Total Deposits: $360,500 million
+- Long-Term Borrowings: $245,000 million
+- Total Common Shareholders' Equity: $98,400 million
+- Standardized Common Equity Tier 1 (CET1) Capital Ratio: 15.2%

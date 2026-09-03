@@ -1,0 +1,66 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+FORM 10-K
+
+ANNUAL REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934
+For the fiscal year ended September 28, 2024
+Commission File Number: 001-36743
+
+APPLE INC.
+(Exact name of Registrant as specified in its charter)
+Ticker: AAPL | State of Incorporation: California | CIK: 0000320193
+
+================================================================================
+PART I - ITEM 1. BUSINESS & SEGMENT OVERVIEW
+================================================================================
+Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories, and sells a variety of related services.
+Fiscal 2024 Net Sales by Product Category:
+- iPhone: $201,183 million (compared to $200,583 million in 2023)
+- Mac: $29,984 million (compared to $29,357 million in 2023)
+- iPad: $26,694 million (compared to $28,300 million in 2023)
+- Wearables, Home and Accessories: $37,005 million (compared to $39,845 million in 2023)
+- Services (App Store, Apple Music, iCloud, ApplePay): $96,169 million (compared to $85,200 million in 2023)
+
+Total Net Sales for Fiscal Year 2024: $391,035 million (up 2.0% from $383,285 million in 2023).
+
+================================================================================
+PART I - ITEM 1A. RISK FACTORS
+================================================================================
+1. Global Supply Chain and Component Concentration:
+The Company relies on single-source or limited-source manufacturing partners primarily located in Asia, specifically Taiwan (TSMC for custom Apple Silicon processors) and China (Foxconn for iPhone assembly). Geopolitical tensions, trade tariffs, natural disasters, or export restrictions in the Asia-Pacific region could severely disrupt production and materially adversely affect business operations.
+
+2. Antitrust, Regulatory, and App Store Scrutiny:
+The Company is subject to complex and evolving global regulations, including the European Union Digital Markets Act (DMA) and ongoing Department of Justice (DOJ) civil antitrust lawsuits alleging monopolization of smartphone markets. Mandated changes to App Store fee structures, third-party payment processing, and alternative app store sideloading could reduce high-margin Services revenue.
+
+3. Rapid Technological Shifts and Artificial Intelligence (AI) Competition:
+The technology industry is characterized by rapid advancements in Generative Artificial Intelligence and machine learning. If the Company fails to successfully integrate Apple Intelligence and competitive AI capabilities across its hardware and operating systems, customer demand and brand loyalty may deteriorate.
+
+================================================================================
+PART II - ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS (MD&A)
+================================================================================
+Executive Overview:
+Fiscal Year 2024 demonstrated strong operational discipline and record Services revenue of $96.2 billion, up 12.9% year-over-year. 
+- Gross Margin for 2024 was $180,683 million (Gross Margin percentage of 46.2%, up from 44.1% in 2023), driven by favorable Services mix and cost optimizations.
+- Operating Income for 2024 was $123,216 million (Operating Margin of 31.5%), compared to $114,301 million in 2023.
+- Research and Development (R&D) expenses were $31,370 million in 2024, compared to $29,915 million in 2023, reflecting continuous investments in custom silicon and AI infrastructure.
+
+================================================================================
+PART II - ITEM 8. FINANCIAL STATEMENTS AND CONSOLIDATED RESULTS
+================================================================================
+CONSOLIDATED STATEMENTS OF OPERATIONS (in millions, except per share amounts):
+- Total Net Sales: $391,035 (2024) | $383,285 (2023)
+- Cost of Sales: $210,352 (2024) | $214,137 (2023)
+- Gross Margin: $180,683 (2024) | $169,148 (2023)
+- Operating Expenses (R&D + SG&A): $57,467 (2024) | $54,847 (2023)
+- Operating Income: $123,216 (2024) | $114,301 (2023)
+- Net Income: $93,736 (2024) | $96,995 (2023)
+- Diluted Earnings Per Share (EPS): $6.08 (2024) | $6.13 (2023)
+- Diluted Shares Outstanding: 15,408 million shares
+
+CONSOLIDATED BALANCE SHEET HIGHLIGHTS (in millions):
+- Cash and Cash Equivalents: $29,943 million
+- Marketable Securities (Short-term + Long-term): $126,678 million
+- Total Total Cash & Liquid Investments: $156,621 million
+- Total Commercial Paper & Term Debt: $106,629 million
+- Total Shareholders' Equity: $66,808 million
+- Total Assets: $364,980 million
