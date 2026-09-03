@@ -13,7 +13,7 @@ Every component of this project is documented step-by-step for easy learning and
 4. [**03 - Deterministic Financial Math Tools**](./docs/03_DETERMINISTIC_FINANCIAL_MATH_TOOLS.md)
 5. [**04 - LangGraph Multi-Agent Stateful Orchestration**](./docs/04_LANGGRAPH_MULTI_AGENT_WORKFLOW.md)
 6. [**05 - Guardrails & Pydantic Structured Outputs**](./docs/05_GUARDRAILS_AND_STRUCTURED_OUTPUTS.md)
-7. *(Next: 06 - Evaluation & LLM-as-a-Judge Benchmark)*
+7. [**06 - Automated Evaluation & LLM-as-a-Judge Benchmark**](./docs/06_EVALUATION_AND_LLM_AS_A_JUDGE.md)
 8. *(Next: 07 - Full-Stack Deployment & Morgan Stanley Interview Guide)*
 
 ---
