@@ -15,6 +15,7 @@ Every component of this project is documented step-by-step for easy learning and
 6. [**05 - Guardrails & Pydantic Structured Outputs**](./docs/05_GUARDRAILS_AND_STRUCTURED_OUTPUTS.md)
 7. [**06 - Automated Evaluation & LLM-as-a-Judge Benchmark**](./docs/06_EVALUATION_AND_LLM_AS_A_JUDGE.md)
 8. [**07 - Full-Stack Deployment & Morgan Stanley Interview Master Guide**](./docs/07_FULLSTACK_DEPLOYMENT_AND_INTERVIEW_GUIDE.md)
+9. [**08 - Streamlit Light-Mode UI & Interactive Dashboard Guide**](./docs/08_STREAMLIT_UI_AND_DASHBOARD_GUIDE.md)
 
 ---
 
