@@ -9,6 +9,41 @@ Rather than treating financial filings as generic text, our ingestion pipeline p
 
 ---
 
+## 📁 Associated Project Files (Where to Look)
+
+| File / Component | Location | Purpose & Description |
+| :--- | :--- | :--- |
+| **SEC Document Loader** | [`src/ingestion/loader.py`](../src/ingestion/loader.py) | Parses 10-K filings into discrete legal items (`Item 1`, `1A`, `7`, `8`) and extracts metadata (`ticker`, `year`, `company`). |
+| **Financial Chunker** | [`src/ingestion/chunker.py`](../src/ingestion/chunker.py) | Implements `RecursiveCharacterTextSplitter` (1000 chars, 150 overlap) with financial separator hierarchy to preserve balance sheet tables. |
+| **Apple 10-K Dataset** | [`data/raw/apple_10k_2024.txt`](../data/raw/apple_10k_2024.txt) | Real Apple Fiscal 2024 Form 10-K filing excerpt (Revenue, iPhone mix, Services, MD&A, Balance Sheet). |
+| **Morgan Stanley 10-K Dataset** | [`data/raw/morgan_stanley_10k_2024.txt`](../data/raw/morgan_stanley_10k_2024.txt) | Real Morgan Stanley 2024 Form 10-K filing excerpt (Wealth Management, Institutional Securities, ROTCE, Item 1A Risks). |
+| **Step 1 Verification Test** | [`tests/test_ingestion.py`](../tests/test_ingestion.py) | Automated test script that loads raw filings, splits them into chunks, and asserts metadata integrity. |
+
+---
+
+## 🧪 How to Run & Verify Step 1
+
+Run the test suite from the `FinAgent` directory:
+```bash
+python tests/test_ingestion.py
+```
+
+**Expected Output:**
+```text
+--- Running Ingestion & Chunking Tests ---
+✅ Loaded 5 major sections from Apple 10-K.
+✅ Generated 6 retrieval chunks.
+   Sample Chunk ID: AAPL_2024_chunk_0
+   Ticker: AAPL
+   Section: Header & Overview
+   Length: 381 chars
+✅ Loaded 5 major sections from Morgan Stanley 10-K.
+✅ Generated 6 retrieval chunks for Morgan Stanley.
+🎉 Ingestion & Chunking pipeline is 100% verified!
+```
+
+---
+
 ## 2. 🏛️ The Financial Context (Understanding SEC 10-K Filings)
 
 Every publicly traded corporation in the US (like Apple, Microsoft, or Morgan Stanley) must file an annual **Form 10-K** with the Securities and Exchange Commission (SEC). 
@@ -45,7 +80,7 @@ Why do 90% of beginner RAG tutorials fail when applied to Wall Street filings?
 
 We engineered two dedicated classes inside `FinAgent/src/ingestion/`:
 
-### A. `SECDocumentLoader` (`src/ingestion/loader.py`)
+### A. `SECDocumentLoader` ([`src/ingestion/loader.py`](../src/ingestion/loader.py))
 * **What it does:** Uses regular expressions (`section_pattern`) to identify major SEC header boundaries (`ITEM 1`, `ITEM 1A`, `ITEM 7`, `ITEM 8`).
 * **Metadata Extraction:** Automatically extracts and attaches:
   * `ticker` (e.g., `"AAPL"`, `"MS"`)
@@ -54,7 +89,7 @@ We engineered two dedicated classes inside `FinAgent/src/ingestion/`:
   * `section` (e.g., `"PART I - ITEM 1A. RISK FACTORS"`)
   * `doc_type` (e.g., `"10-K"`)
 
-### B. `FinancialChunker` (`src/ingestion/chunker.py`)
+### B. `FinancialChunker` ([`src/ingestion/chunker.py`](../src/ingestion/chunker.py))
 * **Chunk Size:** **1,000 characters** (large enough to encapsulate complete financial statement line items and multi-line risk paragraphs).
 * **Chunk Overlap:** **150 characters** (ensures contiguous sentences and numerical context are never lost across boundaries).
 * **Financial Separator Hierarchy:**
