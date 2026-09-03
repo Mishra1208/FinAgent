@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 
 from src.agents.graph import run_financial_analysis
 from src.guardrails.input_guardrails import InputGuardrail
-from src.guardrails.output_guardrails import OutputGuardrail
+from src.guardrails.output_guardrails import OutputGuardrail, FinancialDossierResponse
 
 # ----------------------------------------------------------------------
 # Page Configuration (Light Mode Theme)
@@ -69,7 +69,7 @@ st.markdown("""
     .kpi-sub {
         font-size: 12px;
         color: #059669;
-        font-weight: 500;
+        font-weight: 600;
     }
 
     /* Risk Card */
@@ -122,10 +122,10 @@ with st.sidebar:
 
     fiscal_year = st.selectbox(
         "📅 Fiscal Period",
-        options=["2024 (Latest Annual Form 10-K)", "2023"],
+        options=["2024 (Latest Annual Form 10-K)", "2023 (Prior Year)"],
         index=0
     )
-    year = "2024" if "2024" in fiscal_year else "2023"
+    year = "2023" if "2023" in fiscal_year else "2024"
 
     st.markdown("---")
     st.markdown("### 💡 Quick Prompt Presets")
@@ -141,7 +141,7 @@ with st.sidebar:
 
     prompt_map = {
         "Full Performance & Risk Audit": f"Analyze {company_name} {year} financial performance, margins, and Item 1A risk factors.",
-        "Revenue Growth & Operating Margin": f"Calculate {company_name} {year} YoY revenue growth and operating margin percentage.",
+        "Revenue Growth & Operating Margin": f"Calculate {company_name} {year} revenue and operating margins.",
         "Supply Chain & Geopolitical Risks": f"Audit {company_name} top supply chain vulnerabilities, manufacturing concentration, and antitrust risks.",
         "Regulatory Capital & Basel III": f"Audit {company_name} capital adequacy, CET1 standardized ratio, and regulatory compliance."
     }
@@ -171,7 +171,7 @@ st.markdown(f"""
 # Query Input Box
 # ----------------------------------------------------------------------
 default_query = prompt_map.get(preset, f"Analyze {company_name} {year} financial performance.")
-user_query = st.text_input("💬 Enter Financial Analysis Query or Regulatory Audit Prompt:", value=default_query)
+user_query = st.text_input("💬 Enter Financial Analysis Query or Regulatory Audit Prompt:", value=default_query, key=f"query_input_{ticker}_{year}")
 
 col_btn, col_info = st.columns([1, 4])
 with col_btn:
@@ -183,28 +183,29 @@ if run_btn or user_query:
     if not is_valid:
         st.error(f"🛡️ Guardrail Rejection: {reason}")
     else:
-        with st.status("🤖 Orchestrating Multi-Agent Workflow...", expanded=True) as status_box:
+        with st.status(f"🤖 Orchestrating Multi-Agent Workflow for {company_name} (FY {year})...", expanded=True) as status_box:
             st.write("🔍 **Supervisor Node:** Parsing intent & executing Hybrid RAG retrieval (BM25 + Chroma)...")
-            st.write("📊 **Quant Analyst Node:** Executing deterministic Python formulas for exact margins & ratios...")
+            st.write(f"📊 **Quant Analyst Node:** Executing deterministic Python formulas for {year} metrics...")
             st.write("⚠️ **Risk Auditor Node:** Parsing Item 1A Risk Factors & computing severity matrix...")
             st.write("🛡️ **Verifier Node:** Auditing citations against SEC source chunks...")
             
-            # Execute Graph
+            # Execute Graph with unique session ID per entity/year to prevent stale checkpoint collision
+            session_key = f"streamlit_session_{ticker}_{year}"
             raw_state = run_financial_analysis(
                 query=user_query,
                 ticker=ticker,
                 fiscal_year=year,
-                thread_id="streamlit_user_session"
+                thread_id=session_key
             )
             
             # Validate Output Schema
             response: FinancialDossierResponse = OutputGuardrail.validate_and_format_response(raw_state)
-            status_box.update(label="✅ Analysis Complete & Fully Grounded!", state="complete", expanded=False)
+            status_box.update(label=f"✅ {company_name} (FY {year}) Analysis Complete & Fully Grounded!", state="complete", expanded=False)
 
         # ------------------------------------------------------------------
         # Display KPI Cards
         # ------------------------------------------------------------------
-        st.markdown("### 📈 Key Deterministic Performance Metrics")
+        st.markdown(f"### 📈 Key Deterministic Performance Metrics ({year})")
         
         metrics = response.metrics
         if metrics:
@@ -228,7 +229,7 @@ if run_btn or user_query:
             st.markdown(response.markdown_report)
 
         with tab_risks:
-            st.markdown("### ⚠️ Item 1A Risk Factors & Vulnerability Analysis")
+            st.markdown(f"### ⚠️ Item 1A Risk Factors & Vulnerability Analysis ({company_name})")
             for r in response.risk_factors:
                 badge_class = "badge-critical" if r.severity == "CRITICAL" else "badge-high"
                 st.markdown(f"""
@@ -244,7 +245,7 @@ if run_btn or user_query:
                 """, unsafe_allow_html=True)
 
         with tab_citations:
-            st.markdown("### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks")
+            st.markdown(f"### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks ({company_name})")
             for idx, doc in enumerate(raw_state.get("retrieved_docs", []), 1):
                 with st.expander(f"Chunk #{idx}: {doc.get('section', 'SEC Filing')} (RRF Score: {doc.get('rrf_score', 0.0):.4f})"):
                     st.text(doc.get("content", ""))
