@@ -20,6 +20,31 @@ import {
 export default function FileStructureView({ onSelectFile }) {
   const structureData = [
     {
+      folder: "data/raw/",
+      description: "Audited SEC Form 10-K filings for Apple (AAPL), Morgan Stanley (MS), and Microsoft (MSFT)",
+      color: "amber",
+      files: [
+        {
+          name: "apple_10k_2024.txt",
+          id: "ingestion-loader",
+          role: "Audited SEC Form 10-K filing for Apple Inc. (Fiscal Year 2024) containing Item 1A Risks, Item 7 MD&A, and Item 8 Financials.",
+          badge: "Raw 10-K Data"
+        },
+        {
+          name: "morgan_stanley_10k_2024.txt",
+          id: "ingestion-loader",
+          role: "Audited SEC Form 10-K filing for Morgan Stanley (Fiscal Year 2024) containing Basel III regulatory capital and CET1 ratios.",
+          badge: "Raw 10-K Data"
+        },
+        {
+          name: "microsoft_10k_2024.txt",
+          id: "ingestion-loader",
+          role: "Audited SEC Form 10-K filing for Microsoft Corporation (Fiscal Year 2024) containing Azure Cloud, AI Copilot, and segment performance.",
+          badge: "Raw 10-K Data"
+        }
+      ]
+    },
+    {
       folder: "src/ingestion/",
       description: "Data loading, regex section parsing, and financial table chunking",
       color: "blue",
@@ -160,8 +185,14 @@ export default function FileStructureView({ onSelectFile }) {
         {
           name: "src/ui/app.py",
           id: "ui-app",
-          role: "Streamlit dashboard featuring company selector (AAPL vs MS), fiscal year filters, high-contrast KPI metric cards, and audited risk tables.",
+          role: "Streamlit dashboard featuring company selector (AAPL, MS, MSFT), preset intent buttons, high-contrast tab styling, and audited SEC citation inspectors.",
           badge: "Streamlit UI Dashboard"
+        },
+        {
+          name: ".streamlit/config.toml",
+          id: "ui-config",
+          role: "Enforces Streamlit light mode base theme and custom hex color tokens to prevent dark-mode browser overrides.",
+          badge: "UI Theme Config"
         }
       ]
     },

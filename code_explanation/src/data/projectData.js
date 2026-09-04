@@ -1486,47 +1486,107 @@ export const PROJECT_MODULES = [
     "badgeColor": "blue",
     "title": "Streamlit Interactive Financial Dashboard",
     "path": "src/ui/app.py",
-    "summary": "Builds an interactive web dashboard using Streamlit. Allows equity analysts to select companies (Apple, Morgan Stanley), choose fiscal periods, inspect deterministic financial metrics in high-contrast KPI cards, explore audited Item 1A risk disclosures with severity badges, and examine source SEC chunks.",
+    "summary": "Builds an interactive web dashboard using Streamlit. Allows equity analysts to select companies (Apple, Morgan Stanley, Microsoft), trigger dynamic query intent presets (Revenue Margins, Supply Chain & Geopolitical Risks, Basel III Capital, 360 Audit), inspect deterministic financial metrics in high-contrast KPI cards, explore audited Item 1A risk disclosures with severity badges, and examine source SEC citation chunks in formatted pre containers.",
     "keyConcepts": [
       "Streamlit Multi-Tab Dashboard",
-      "Interactive KPI Metric Cards",
+      "Dynamic Query Intent Presets",
+      "High-Contrast Tab & Expander CSS",
       "Item 1A Risk Severity Badges",
-      "Real-Time Query Execution",
-      "Institutional Financial UI"
+      "Audited SEC Citation Chunk Inspector",
+      "Multi-Company Support (AAPL, MS, MSFT)"
     ],
     "interviewQuestions": [
       {
         "question": "Why did you build a Streamlit dashboard alongside FastAPI?",
-        "answer": "Streamlit allows rapid prototyping of institutional dashboards with rich metric cards, tabbed views, and interactive filters. It gives non-technical stakeholders (portfolio managers, compliance officers) an intuitive UI to test the multi-agent system live."
+        "answer": "Streamlit allows rapid prototyping of institutional dashboards with rich metric cards, tabbed views, preset intent buttons, and interactive filters. It gives non-technical stakeholders (portfolio managers, compliance officers) an intuitive UI to test the multi-agent system live."
+      },
+      {
+        "question": "How did you solve CSS tab text contrast and browser dark-mode conflicts in Streamlit?",
+        "answer": "We configured a strict light base theme in .streamlit/config.toml and injected targeted CSS overrides for div[data-testid='stTabs'] button, forcing unselected tab text to #1e293b (slate-800) and active tabs to #1d4ed8 (blue-700) with solid background borders."
       }
     ],
     "sections": [
       {
         "sectionId": "ui-sec-1",
         "startLine": 1,
-        "endLine": 45,
-        "title": "Streamlit Dashboard Setup & Interactive Controls",
-        "code": "import streamlit as st\nimport pandas as pd\nimport json\nfrom src.guardrails.input_guardrails import InputGuardrail\nfrom src.agents.graph import run_financial_analysis\nfrom src.guardrails.output_guardrails import OutputGuardrail\n\nst.set_page_config(\n    page_title=\"FinAgent | Institutional SEC Intelligence\",\n    page_icon=\"\ud83d\udcca\",\n    layout=\"wide\",\n    initial_sidebar_state=\"expanded\"\n)\n\n# Sidebar Configuration\nwith st.sidebar:\n    st.image(\"https://img.icons8.com/fluency/96/bullish.png\", width=64)\n    st.title(\"FinAgent Console\")\n    st.caption(\"SEC 10-K Multi-Agent Financial Intelligence\")\n    \n    selected_ticker = st.selectbox(\n        \"Select Target Company\",\n        options=[\"AAPL\", \"MS\"],\n        format_func=lambda x: \"Apple Inc. (AAPL)\" if x == \"AAPL\" else \"Morgan Stanley (MS)\"\n    )\n    \n    selected_year = st.selectbox(\"Fiscal Year\", options=[\"2024\", \"2023\"], index=0)",
+        "endLine": 65,
+        "title": "Streamlit Dashboard Setup, Company Selectors & Theme Injection",
+        "code": "import streamlit as st\nimport pandas as pd\nimport json\nfrom src.guardrails.input_guardrails import InputGuardrail\nfrom src.agents.graph import run_financial_analysis\nfrom src.guardrails.output_guardrails import OutputGuardrail\n\nst.set_page_config(\n    page_title=\"FinAgent | Institutional SEC Intelligence\",\n    page_icon=\"\ud83d\udcca\",\n    layout=\"wide\",\n    initial_sidebar_state=\"expanded\"\n)\n\n# Custom High-Contrast CSS for Tabs, Expanders and Metrics\nst.markdown(\"\"\"\n<style>\n    div[data-testid=\"stTabs\"] button {\n        color: #1e293b !important;\n        font-weight: 700 !important;\n        font-size: 15px !important;\n        background-color: #f1f5f9 !important;\n        border-radius: 8px 8px 0 0 !important;\n        margin-right: 4px !important;\n    }\n    div[data-testid=\"stTabs\"] button[aria-selected=\"true\"] {\n        color: #1d4ed8 !important;\n        background-color: #ffffff !important;\n        border-top: 3px solid #2563eb !important;\n    }\n    .sec-chunk-box {\n        background-color: #f8fafc;\n        border: 1px solid #cbd5e1;\n        border-radius: 8px;\n        padding: 12px;\n        font-family: monospace;\n        font-size: 13px;\n        color: #0f172a;\n    }\n</style>\n\"\"\", unsafe_allow_html=True)\n\n# Sidebar Configuration\nwith st.sidebar:\n    st.image(\"https://img.icons8.com/fluency/96/bullish.png\", width=64)\n    st.title(\"FinAgent Console\")\n    st.caption(\"SEC 10-K Multi-Agent Financial Intelligence\")\n    \n    selected_ticker = st.selectbox(\n        \"Select Target Company\",\n        options=[\"AAPL\", \"MS\", \"MSFT\"],\n        format_func=lambda x: \"Apple Inc. (AAPL)\" if x == \"AAPL\" else (\"Microsoft Corp. (MSFT)\" if x == \"MSFT\" else \"Morgan Stanley (MS)\")\n    )\n    selected_year = st.selectbox(\"Fiscal Year\", options=[\"2024\", \"2023\"], index=0)",
         "lineByLine": [
-          "Line 1: `import streamlit as st` - Streamlit UI library.",
-          "Line 8: `st.set_page_config(..., layout=\"wide\")` - Configures full-width responsive layout.",
-          "Line 16: `with st.sidebar:` - Creates the left sidebar control panel.",
-          "Line 21: `selected_ticker = st.selectbox(...)` - Dropdown allowing analyst to toggle between Apple (AAPL) and Morgan Stanley (MS).",
-          "Line 27: `selected_year = st.selectbox(...)` - Dropdown selecting fiscal year (2024 vs 2023)."
+          "Line 1: `import streamlit as st` - Streamlit UI framework.",
+          "Line 8: `st.set_page_config(..., layout=\"wide\")` - Sets full-width responsive dashboard.",
+          "Lines 15-37: `st.markdown(...)` - Injects bulletproof CSS enforcing #1e293b text color on tabs and styled pre containers for SEC citations.",
+          "Line 40: `with st.sidebar:` - Builds left control sidebar.",
+          "Line 45: `selected_ticker = st.selectbox(...)` - Dropdown supporting Apple (AAPL), Morgan Stanley (MS), and Microsoft (MSFT).",
+          "Line 51: `selected_year = st.selectbox(...)` - Fiscal year selector."
         ],
         "beginnerConcepts": [
           {
-            "term": "Streamlit",
-            "explanation": "A Python framework that creates web dashboards from pure Python scripts without writing HTML/CSS."
+            "term": "Streamlit CSS Injection (`st.markdown(..., unsafe_allow_html=True)`)",
+            "explanation": "Allows embedding custom CSS styling into Streamlit components to ensure perfect color contrast regardless of browser theme."
           },
           {
-            "term": "`st.selectbox`",
-            "explanation": "Creates an interactive dropdown menu on the web page."
+            "term": "Multi-Entity Selectbox",
+            "explanation": "Allows switching between Tech (AAPL), Cloud/AI (MSFT), and Investment Banking (MS) with automatic parameter binding."
           }
         ],
-        "simpleExplanation": "Configures the Streamlit dashboard layout and creates the sidebar with dropdowns to select companies (Apple vs Morgan Stanley) and fiscal years.",
-        "whyWrittenThisWay": "Providing pre-configured dropdowns allows instant demonstration of both Apple (Tech) and Morgan Stanley (Banking) without typing complex prompts.",
-        "interviewTips": "UI presentation tips: having quick one-click demo presets makes live interview demonstrations seamless."
+        "simpleExplanation": "Sets up the Streamlit dashboard layout, injects high-contrast CSS styling for tabs and citation boxes, and creates the company selector dropdown supporting AAPL, MS, and MSFT.",
+        "whyWrittenThisWay": "Injecting explicit CSS overrides ensures high legibility and prevents browser dark-mode extensions from causing low-contrast white-on-white text.",
+        "interviewTips": "Explain: 'I engineered defensive CSS styling in Streamlit to guarantee WCAG-compliant text contrast across both light and dark OS environments.'"
+      }
+    ]
+  },
+  {
+    "id": "ui-config",
+    "category": "8. API & User Interface",
+    "badge": "Config TOML",
+    "badgeColor": "slate",
+    "title": "Streamlit Theme Configuration (.streamlit/config.toml)",
+    "path": ".streamlit/config.toml",
+    "summary": "Declares global Streamlit runtime configurations and theme tokens. Enforces a crisp light base theme, custom primary brand colors (#2563eb), slate backgrounds (#f8fafc), and disables unwanted headless server prompts.",
+    "keyConcepts": [
+      "Streamlit TOML Configuration",
+      "Global Theme Tokens (base, primaryColor, backgroundColor)",
+      "Headless Server Options",
+      "CORS & Security Settings"
+    ],
+    "interviewQuestions": [
+      {
+        "question": "What is the purpose of .streamlit/config.toml?",
+        "answer": "It provides declarative configuration for the Streamlit server and UI theme. By setting base='light', primaryColor='#2563eb', and backgroundColor='#f8fafc', we enforce institutional brand styling across all user machines without requiring command-line flags."
+      }
+    ],
+    "sections": [
+      {
+        "sectionId": "toml-sec-1",
+        "startLine": 1,
+        "endLine": 13,
+        "title": "Theme Tokens & Server Settings",
+        "code": "[theme]\nbase = \"light\"\nprimaryColor = \"#2563eb\"\nbackgroundColor = \"#f8fafc\"\nsecondaryBackgroundColor = \"#ffffff\"\ntextColor = \"#0f172a\"\nfont = \"sans serif\"\n\n[server]\nheadless = true\nenableCORS = false\nenableXsrfProtection = false",
+        "lineByLine": [
+          "Line 1: `[theme]` - TOML section header defining UI appearance.",
+          "Line 2: `base = \"light\"` - Sets foundational light mode baseline.",
+          "Line 3: `primaryColor = \"#2563eb\"` - Blue brand accent for buttons, sliders, and active widgets.",
+          "Line 4: `backgroundColor = \"#f8fafc\"` - Clean slate main background.",
+          "Line 5: `secondaryBackgroundColor = \"#ffffff\"` - Pure white sidebar and card background.",
+          "Line 6: `textColor = \"#0f172a\"` - Dark slate-900 high-contrast text.",
+          "Line 7: `font = \"sans serif\"` - Clean institutional typography.",
+          "Line 9: `[server]` - TOML section for server runtime options.",
+          "Line 10: `headless = true` - Configures Streamlit to run non-interactively in Docker / production environments."
+        ],
+        "beginnerConcepts": [
+          {
+            "term": "TOML File Format",
+            "explanation": "TOML (Tom's Obvious Minimal Language) is a simple configuration file format that uses `[sections]` and `key = value` pairs."
+          },
+          {
+            "term": "Headless Mode",
+            "explanation": "Running a web app on a server without trying to automatically open a desktop browser window upon startup."
+          }
+        ],
+        "simpleExplanation": "A configuration file that tells Streamlit what colors, background shades, and fonts to use, and configures it to run smoothly on production servers.",
+        "whyWrittenThisWay": "Declaring theme settings in a TOML file centralizes visual design tokens and ensures uniform rendering across local development and container deployments.",
+        "interviewTips": "Highlight that centralizing design tokens in TOML enables seamless white-labeling and institutional compliance."
       }
     ]
   },
