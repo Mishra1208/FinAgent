@@ -114,11 +114,18 @@ with st.sidebar:
     
     ticker_choice = st.selectbox(
         "🏢 Target Entity",
-        options=["Apple Inc. (AAPL)", "Morgan Stanley (MS)"],
+        options=["Apple Inc. (AAPL)", "Morgan Stanley (MS)", "Microsoft Corporation (MSFT)"],
         index=0
     )
-    ticker = "AAPL" if "AAPL" in ticker_choice else "MS"
-    company_name = "Apple Inc." if ticker == "AAPL" else "Morgan Stanley"
+    if "MSFT" in ticker_choice:
+        ticker = "MSFT"
+        company_name = "Microsoft Corporation"
+    elif "AAPL" in ticker_choice:
+        ticker = "AAPL"
+        company_name = "Apple Inc."
+    else:
+        ticker = "MS"
+        company_name = "Morgan Stanley"
 
     fiscal_year = st.selectbox(
         "📅 Fiscal Period",
@@ -189,7 +196,7 @@ if run_btn or user_query:
             st.write("⚠️ **Risk Auditor Node:** Parsing Item 1A Risk Factors & computing severity matrix...")
             st.write("🛡️ **Verifier Node:** Auditing citations against SEC source chunks...")
             
-            # Execute Graph with unique session ID per entity/year to prevent stale checkpoint collision
+            # Execute Graph with unique session ID per entity/year
             session_key = f"streamlit_session_{ticker}_{year}"
             raw_state = run_financial_analysis(
                 query=user_query,
@@ -205,7 +212,7 @@ if run_btn or user_query:
         # ------------------------------------------------------------------
         # Display KPI Cards
         # ------------------------------------------------------------------
-        st.markdown(f"### 📈 Key Deterministic Performance Metrics ({year})")
+        st.markdown(f"### 📈 Key Deterministic Performance Metrics ({company_name} - {year})")
         
         metrics = response.metrics
         if metrics:

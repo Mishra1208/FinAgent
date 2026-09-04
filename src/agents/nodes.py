@@ -30,12 +30,15 @@ def get_or_create_retriever() -> FinancialHybridRetriever:
     raw_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data", "raw")
     apple_file = os.path.join(raw_dir, "apple_10k_2024.txt")
     ms_file = os.path.join(raw_dir, "morgan_stanley_10k_2024.txt")
+    msft_file = os.path.join(raw_dir, "microsoft_10k_2024.txt")
 
     docs = []
     if os.path.exists(apple_file):
         docs.extend(SECDocumentLoader(apple_file).load())
     if os.path.exists(ms_file):
         docs.extend(SECDocumentLoader(ms_file).load())
+    if os.path.exists(msft_file):
+        docs.extend(SECDocumentLoader(msft_file).load())
 
     chunker = FinancialChunker(chunk_size=1000, chunk_overlap=150)
     chunks = chunker.chunk_documents(docs)
@@ -64,16 +67,30 @@ def supervisor_node(state: AgentState) -> Dict[str, Any]:
     
     # Infer ticker and company
     ticker = state.ticker or "AAPL"
-    if "MORGAN STANLEY" in query_upper or " MS " in f" {query_upper} " or query_upper.startswith("MS"):
+    if "MICROSOFT" in query_upper or " MSFT " in f" {query_upper} " or query_upper.startswith("MSFT"):
+        ticker = "MSFT"
+        company_name = "Microsoft Corporation"
+    elif "MORGAN STANLEY" in query_upper or " MS " in f" {query_upper} " or (query_upper.startswith("MS") and not query_upper.startswith("MSFT")):
         ticker = "MS"
         company_name = "Morgan Stanley"
     elif "APPLE" in query_upper or " AAPL " in f" {query_upper} " or query_upper.startswith("AAPL"):
         ticker = "AAPL"
         company_name = "Apple Inc."
     else:
-        company_name = "Apple Inc." if ticker == "AAPL" else "Morgan Stanley"
+        if ticker == "MSFT":
+            company_name = "Microsoft Corporation"
+        elif ticker == "MS":
+            company_name = "Morgan Stanley"
+        else:
+            company_name = "Apple Inc."
 
-    fiscal_year = state.fiscal_year or "2024"
+    # Determine fiscal year
+    if "2023" in query:
+        fiscal_year = "2023"
+    elif "2024" in query:
+        fiscal_year = "2024"
+    else:
+        fiscal_year = state.fiscal_year or "2024"
 
     # Query Hybrid Retriever with pre-filtering
     retriever = get_or_create_retriever()
@@ -120,7 +137,6 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
 
     if ticker == "AAPL":
         if year == "2023":
-            # 2023 Apple Metrics
             gm_23 = calculate_margin(169148.0, 383285.0, "Gross Margin")
             om_23 = calculate_margin(114301.0, 383285.0, "Operating Margin")
             nm_23 = calculate_margin(96995.0, 383285.0, "Net Profit Margin")
@@ -174,7 +190,6 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
             ))
         else:
-            # 2024 Apple Metrics
             yoy = calculate_yoy_growth(391035.0, 383285.0, "Total Net Sales")
             gm = calculate_margin(180683.0, 391035.0, "Gross Margin")
             om = calculate_margin(123216.0, 391035.0, "Operating Margin")
@@ -257,7 +272,6 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
 
     elif ticker == "MS":
         if year == "2023":
-            # 2023 Morgan Stanley Metrics
             eff_23 = calculate_efficiency_ratio(41790.0, 54790.0)
             wm_23 = calculate_margin(26270.0, 54790.0, "Wealth Management Share")
 
@@ -310,7 +324,6 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 citation="PART II - ITEM 8. CONSOLIDATED STATEMENTS OF INCOME"
             ))
         else:
-            # 2024 Morgan Stanley Metrics
             yoy = calculate_yoy_growth(59800.0, 54790.0, "Total Net Revenues")
             net_yoy = calculate_yoy_growth(10850.0, 9087.0, "Net Income")
             eff = calculate_efficiency_ratio(44850.0, 59800.0)
@@ -381,6 +394,124 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 citation="PART II - ITEM 8. BALANCE SHEET & CAPITAL HIGHLIGHTS"
             ))
 
+    elif ticker == "MSFT":
+        if year == "2023":
+            om_23 = calculate_margin(88523.0, 211915.0, "Operating Margin")
+            nm_23 = calculate_margin(72361.0, 211915.0, "Net Profit Margin")
+
+            metrics.append(FinancialMetricItem(
+                name="Total Net Revenue",
+                value=211915.0,
+                formatted_value="$211,915M",
+                period="2023",
+                formula_used="Reported Historical SEC 10-K",
+                citation="PART II - ITEM 8. INCOME STATEMENTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Operating Margin",
+                value=om_23["margin_percentage"],
+                formatted_value=f"{om_23['margin_percentage']}%",
+                period="2023",
+                formula_used=om_23["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Income",
+                value=72361.0,
+                formatted_value="$72,361M",
+                period="2023",
+                formula_used=None,
+                citation="PART II - ITEM 8. INCOME STATEMENTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Profit Margin",
+                value=nm_23["margin_percentage"],
+                formatted_value=f"{nm_23['margin_percentage']}%",
+                period="2023",
+                formula_used=nm_23["formula"],
+                citation="PART II - ITEM 8. FINANCIAL RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Diluted Earnings Per Share (EPS)",
+                value=9.68,
+                formatted_value="$9.68",
+                period="2023",
+                formula_used=None,
+                citation="PART II - ITEM 8. INCOME STATEMENTS"
+            ))
+        else:
+            # 2024 Microsoft Metrics
+            yoy = calculate_yoy_growth(245122.0, 211915.0, "Total Net Revenue")
+            cloud_share = calculate_margin(105362.0, 245122.0, "Intelligent Cloud Share")
+            om = calculate_margin(109433.0, 245122.0, "Operating Margin")
+            nm = calculate_margin(88136.0, 245122.0, "Net Profit Margin")
+            pe = calculate_pe_ratio(420.0, 11.80)
+
+            metrics.append(FinancialMetricItem(
+                name="Total Net Revenue",
+                value=245122.0,
+                formatted_value="$245,122M",
+                period="2024",
+                formula_used=yoy["formula"],
+                citation="PART II - ITEM 8. INCOME STATEMENTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="YoY Net Revenue Growth",
+                value=yoy["yoy_growth_percentage"],
+                formatted_value=f"+{yoy['yoy_growth_percentage']}%",
+                period="2024 vs 2023",
+                formula_used=yoy["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Intelligent Cloud Revenue Share",
+                value=cloud_share["margin_percentage"],
+                formatted_value=f"{cloud_share['margin_percentage']}% ($105.36B)",
+                period="2024",
+                formula_used=cloud_share["formula"],
+                citation="PART I - ITEM 1. OPERATING SEGMENTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Operating Margin",
+                value=om["margin_percentage"],
+                formatted_value=f"{om['margin_percentage']}%",
+                period="2024",
+                formula_used=om["formula"],
+                citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Income",
+                value=88136.0,
+                formatted_value="$88,136M",
+                period="2024",
+                formula_used=None,
+                citation="PART II - ITEM 8. INCOME STATEMENTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Net Profit Margin",
+                value=nm["margin_percentage"],
+                formatted_value=f"{nm['margin_percentage']}%",
+                period="2024",
+                formula_used=nm["formula"],
+                citation="PART II - ITEM 8. FINANCIAL RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Diluted Earnings Per Share (EPS)",
+                value=11.80,
+                formatted_value="$11.80",
+                period="2024",
+                formula_used=None,
+                citation="PART II - ITEM 8. INCOME STATEMENTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Trailing P/E Multiple",
+                value=pe["pe_ratio"],
+                formatted_value=f"{pe['pe_ratio']}x",
+                period="Current",
+                formula_used=pe["formula"],
+                citation="Market Price @ $420.00 / 2024 EPS $11.80"
+            ))
+
     return {
         "calculated_metrics": metrics,
         "next_node": "risk_compliance"
@@ -444,6 +575,29 @@ def risk_compliance_node(state: AgentState) -> Dict[str, Any]:
             source_section="PART I - ITEM 1A. RISK FACTORS"
         ))
 
+    elif ticker == "MSFT":
+        risks.append(RiskFactorItem(
+            category="Strategic AI Partnership & GPU Dependency",
+            title="Reliance on OpenAI Commercial Relationship & Third-Party AI Models",
+            severity="CRITICAL",
+            details="Significant commercial and technological dependencies on OpenAI's frontier AI models and specialized GPU hardware supplies (NVIDIA) for Copilot and Azure AI infrastructure.",
+            source_section="PART I - ITEM 1A. RISK FACTORS"
+        ))
+        risks.append(RiskFactorItem(
+            category="Cloud Infrastructure & Cybersecurity",
+            title="Enterprise Cloud Platform Outages, Identity Security & Data Breaches",
+            severity="HIGH",
+            details="Azure and Microsoft 365 cloud infrastructure face persistent, sophisticated cyber threats. Major service interruptions or identity breaches directly threaten enterprise subscription renewals.",
+            source_section="PART I - ITEM 1A. RISK FACTORS"
+        ))
+        risks.append(RiskFactorItem(
+            category="Global Regulatory & Antitrust",
+            title="Worldwide Scrutiny of AI Governance, Software Bundling & Cloud Licensing",
+            severity="HIGH",
+            details="Intensified regulatory oversight from the FTC, UK CMA, and EU Commission regarding AI market consolidation, Teams bundling, and cloud infrastructure licensing practices.",
+            source_section="PART I - ITEM 1A. RISK FACTORS"
+        ))
+
     return {
         "risk_factors": risks,
         "next_node": "verifier"
@@ -459,7 +613,13 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
     retrieved SEC document chunks to guarantee zero hallucinations,
     then synthesizes the executive Wall Street Research Dossier.
     """
-    company_name = state.company_name or ("Apple Inc." if state.ticker == "AAPL" else "Morgan Stanley")
+    if state.ticker == "MSFT":
+        company_name = "Microsoft Corporation"
+    elif state.ticker == "MS":
+        company_name = "Morgan Stanley"
+    else:
+        company_name = "Apple Inc."
+
     ticker = state.ticker
     fiscal_year = state.fiscal_year
 

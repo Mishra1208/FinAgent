@@ -18,63 +18,92 @@ class SECDocumentLoader:
         """
         Reads the file and parses major SEC 10-K sections into discrete Document objects.
         """
-        with open(self.file_path, "r", encoding="utf-8") as f:
+        with open(self.file_path, "r", encoding="utf-8", errors="ignore") as f:
             raw_text = f.read()
 
         filename = os.path.basename(self.file_path)
+        fn_lower = filename.lower()
         
-        # Infer ticker and year from filename or text
-        ticker = "UNKNOWN"
-        fiscal_year = "2024"
-        
-        if "apple" in filename.lower() or "aapl" in filename.lower():
+        # Infer ticker and company
+        if "apple" in fn_lower or "aapl" in fn_lower:
             ticker = "AAPL"
             company_name = "Apple Inc."
-        elif "morgan_stanley" in filename.lower() or "ms" in filename.lower():
+        elif "morgan_stanley" in fn_lower or "ms_" in fn_lower or fn_lower.startswith("ms"):
             ticker = "MS"
             company_name = "Morgan Stanley"
+        elif "microsoft" in fn_lower or "msft" in fn_lower:
+            ticker = "MSFT"
+            company_name = "Microsoft Corporation"
         else:
             ticker = "CORP"
             company_name = "Enterprise Corporation"
 
-        # Split document by major SEC Sections (PART I, PART II, ITEMS)
-        section_pattern = r"(={10,}\s*\nPART\s+[I|II|III|IV]+\s*-\s*ITEM\s+[0-9A-Z\.]+[^\n]*\n={10,})"
-        parts = re.split(section_pattern, raw_text)
+        # Infer year
+        year_match = re.search(r"202[0-9]", filename)
+        fiscal_year = year_match.group(0) if year_match else "2024"
+
+        # Regex supporting both formatted and raw SEC EDGAR section headers
+        section_pattern = r"(?:={10,}\s*\n)?(PART\s+[I|II|III|IV]+[\s\n\-]+ITEM\s+[0-9A-Z\.]+[^\n]*)(?:\n={10,})?"
+        
+        # Split by sections
+        split_positions = [m.start() for m in re.finditer(section_pattern, raw_text, flags=re.IGNORECASE)]
+        
+        if not split_positions or len(split_positions) < 2:
+            # Fallback regex for raw SEC headings
+            alt_pattern = r"\n\s*(ITEM\s+[0-9A-Z\.]+\s*[\.\-:]?\s*[A-Z\s,–—]{3,60})\n"
+            split_positions = [m.start() for m in re.finditer(alt_pattern, raw_text, flags=re.IGNORECASE)]
 
         documents = []
-        current_section = "Header & General Information"
-
-        # If header exists before first section marker
-        if len(parts) > 0 and not parts[0].startswith("==="):
-            header_doc = Document(
-                page_content=parts[0].strip(),
+        if not split_positions:
+            # Single document fallback
+            doc = Document(
+                page_content=raw_text[:15000],
                 metadata={
                     "source": filename,
                     "ticker": ticker,
                     "company": company_name,
                     "fiscal_year": fiscal_year,
-                    "section": "Header & Overview",
+                    "section": "PART I - ITEM 1. BUSINESS & RESULTS",
                     "doc_type": "10-K"
                 }
             )
-            documents.append(header_doc)
+            documents.append(doc)
+            return documents
 
-        # Parse section headers and corresponding text bodies
-        for i in range(1, len(parts), 2):
-            sec_header = parts[i].strip().replace("=", "").strip()
-            sec_content = parts[i+1].strip() if i+1 < len(parts) else ""
+        # Add Header document if text precedes first section
+        if split_positions[0] > 0:
+            header_text = raw_text[:split_positions[0]].strip()
+            if header_text:
+                documents.append(Document(
+                    page_content=header_text[:3000],
+                    metadata={
+                        "source": filename,
+                        "ticker": ticker,
+                        "company": company_name,
+                        "fiscal_year": fiscal_year,
+                        "section": "Header & Overview",
+                        "doc_type": "10-K"
+                    }
+                ))
 
-            # Extract clean section title (e.g., "ITEM 1A. RISK FACTORS")
-            clean_sec_name = sec_header.split("\n")[0] if "\n" in sec_header else sec_header
+        # Chunk out each identified section
+        for idx in range(len(split_positions)):
+            start_pos = split_positions[idx]
+            end_pos = split_positions[idx+1] if idx + 1 < len(split_positions) else len(raw_text)
+            sec_block = raw_text[start_pos:end_pos].strip()
+
+            lines = sec_block.split("\n")
+            first_line = lines[0].replace("=", "").strip()
+            sec_title = first_line if len(first_line) > 3 else "SEC 10-K Disclosure"
 
             doc = Document(
-                page_content=f"{sec_header}\n\n{sec_content}",
+                page_content=sec_block,
                 metadata={
                     "source": filename,
                     "ticker": ticker,
                     "company": company_name,
                     "fiscal_year": fiscal_year,
-                    "section": clean_sec_name,
+                    "section": sec_title[:60],
                     "doc_type": "10-K"
                 }
             )
