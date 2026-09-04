@@ -148,7 +148,7 @@ with st.sidebar:
 
     prompt_map = {
         "Full Performance & Risk Audit": f"Analyze {company_name} {year} financial performance, margins, and Item 1A risk factors.",
-        "Revenue Growth & Operating Margin": f"Calculate {company_name} {year} revenue and operating margins.",
+        "Revenue Growth & Operating Margin": f"Calculate {company_name} {year} revenue growth, operating margin, and profitability ratios.",
         "Supply Chain & Geopolitical Risks": f"Audit {company_name} top supply chain vulnerabilities, manufacturing concentration, and antitrust risks.",
         "Regulatory Capital & Basel III": f"Audit {company_name} capital adequacy, CET1 standardized ratio, and regulatory compliance."
     }
@@ -175,10 +175,14 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------------------------
-# Query Input Box
+# Query Input Box (Dynamic Key ensures Preset updates instantly)
 # ----------------------------------------------------------------------
 default_query = prompt_map.get(preset, f"Analyze {company_name} {year} financial performance.")
-user_query = st.text_input("💬 Enter Financial Analysis Query or Regulatory Audit Prompt:", value=default_query, key=f"query_input_{ticker}_{year}")
+user_query = st.text_input(
+    "💬 Enter Financial Analysis Query or Regulatory Audit Prompt:",
+    value=default_query,
+    key=f"query_{ticker}_{year}_{preset.replace(' ', '_')}"
+)
 
 col_btn, col_info = st.columns([1, 4])
 with col_btn:
@@ -196,8 +200,8 @@ if run_btn or user_query:
             st.write("⚠️ **Risk Auditor Node:** Parsing Item 1A Risk Factors & computing severity matrix...")
             st.write("🛡️ **Verifier Node:** Auditing citations against SEC source chunks...")
             
-            # Execute Graph with unique session ID per entity/year
-            session_key = f"streamlit_session_{ticker}_{year}"
+            # Execute Graph with unique session ID per entity/year/preset
+            session_key = f"session_{ticker}_{year}_{preset.replace(' ', '_')}"
             raw_state = run_financial_analysis(
                 query=user_query,
                 ticker=ticker,
@@ -228,32 +232,56 @@ if run_btn or user_query:
                     """, unsafe_allow_html=True)
 
         # ------------------------------------------------------------------
-        # Display Tabs for Report & Risks
+        # Display Tabs for Report, Risks, and Citations
         # ------------------------------------------------------------------
-        tab_report, tab_risks, tab_citations = st.tabs(["📄 Executive Dossier", "⚠️ Risk Factor Audit", "📚 SEC Citations"])
-
-        with tab_report:
-            st.markdown(response.markdown_report)
-
-        with tab_risks:
-            st.markdown(f"### ⚠️ Item 1A Risk Factors & Vulnerability Analysis ({company_name})")
-            for r in response.risk_factors:
-                badge_class = "badge-critical" if r.severity == "CRITICAL" else "badge-high"
-                st.markdown(f"""
-                <div class="risk-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: 700; font-size: 16px; color: #0f172a;">{r.title}</span>
-                        <span class="{badge_class}">{r.severity}</span>
+        # If user selected a risk preset, highlight the Risk Tab first!
+        if "Risk" in preset or "Supply Chain" in preset:
+            tab_risks, tab_report, tab_citations = st.tabs(["⚠️ Risk Factor Audit", "📄 Executive Dossier", "📚 SEC Citations"])
+            with tab_risks:
+                st.markdown(f"### ⚠️ Item 1A Risk Factors & Vulnerability Analysis ({company_name})")
+                for r in response.risk_factors:
+                    badge_class = "badge-critical" if r.severity == "CRITICAL" else "badge-high"
+                    st.markdown(f"""
+                    <div class="risk-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 700; font-size: 16px; color: #0f172a;">{r.title}</span>
+                            <span class="{badge_class}">{r.severity}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #475569; margin-bottom: 6px;"><strong>Category:</strong> {r.category}</div>
+                        <div style="font-size: 14px; color: #334155; line-height: 1.5;">{r.details}</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 8px;"><em>Source: {r.source_section}</em></div>
                     </div>
-                    <div style="font-size: 13px; color: #475569; margin-bottom: 6px;"><strong>Category:</strong> {r.category}</div>
-                    <div style="font-size: 14px; color: #334155; line-height: 1.5;">{r.details}</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;"><em>Source: {r.source_section}</em></div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        with tab_citations:
-            st.markdown(f"### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks ({company_name})")
-            for idx, doc in enumerate(raw_state.get("retrieved_docs", []), 1):
-                with st.expander(f"Chunk #{idx}: {doc.get('section', 'SEC Filing')} (RRF Score: {doc.get('rrf_score', 0.0):.4f})"):
-                    st.text(doc.get("content", ""))
-                    st.caption(f"Chunk ID: {doc.get('chunk_id')} | Ticker: {doc.get('ticker')} | Year: {doc.get('fiscal_year')}")
+                    """, unsafe_allow_html=True)
+            with tab_report:
+                st.markdown(response.markdown_report)
+            with tab_citations:
+                st.markdown(f"### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks ({company_name})")
+                for idx, doc in enumerate(raw_state.get("retrieved_docs", []), 1):
+                    with st.expander(f"Chunk #{idx}: {doc.get('section', 'SEC Filing')} (RRF Score: {doc.get('rrf_score', 0.0):.4f})"):
+                        st.text(doc.get("content", ""))
+                        st.caption(f"Chunk ID: {doc.get('chunk_id')} | Ticker: {doc.get('ticker')} | Year: {doc.get('fiscal_year')}")
+        else:
+            tab_report, tab_risks, tab_citations = st.tabs(["📄 Executive Dossier", "⚠️ Risk Factor Audit", "📚 SEC Citations"])
+            with tab_report:
+                st.markdown(response.markdown_report)
+            with tab_risks:
+                st.markdown(f"### ⚠️ Item 1A Risk Factors & Vulnerability Analysis ({company_name})")
+                for r in response.risk_factors:
+                    badge_class = "badge-critical" if r.severity == "CRITICAL" else "badge-high"
+                    st.markdown(f"""
+                    <div class="risk-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 700; font-size: 16px; color: #0f172a;">{r.title}</span>
+                            <span class="{badge_class}">{r.severity}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #475569; margin-bottom: 6px;"><strong>Category:</strong> {r.category}</div>
+                        <div style="font-size: 14px; color: #334155; line-height: 1.5;">{r.details}</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 8px;"><em>Source: {r.source_section}</em></div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            with tab_citations:
+                st.markdown(f"### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks ({company_name})")
+                for idx, doc in enumerate(raw_state.get("retrieved_docs", []), 1):
+                    with st.expander(f"Chunk #{idx}: {doc.get('section', 'SEC Filing')} (RRF Score: {doc.get('rrf_score', 0.0):.4f})"):
+                        st.text(doc.get("content", ""))
+                        st.caption(f"Chunk ID: {doc.get('chunk_id')} | Ticker: {doc.get('ticker')} | Year: {doc.get('fiscal_year')}")
