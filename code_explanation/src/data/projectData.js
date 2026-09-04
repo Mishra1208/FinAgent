@@ -88,25 +88,18 @@ export const PROJECT_MODULES = [
       {
         "sectionId": "loader-sec-3",
         "startLine": 17,
-        "endLine": 39,
-        "title": "File Reading & Entity Ingestion (Apple vs Morgan Stanley)",
-        "code": "    def load(self) -> List[Document]:\n        \"\"\"\n        Reads the file and parses major SEC 10-K sections into discrete Document objects.\n        \"\"\"\n        with open(self.file_path, \"r\", encoding=\"utf-8\") as f:\n            raw_text = f.read()\n\n        filename = os.path.basename(self.file_path)\n        \n        # Infer ticker and year from filename or text\n        ticker = \"UNKNOWN\"\n        fiscal_year = \"2024\"\n        \n        if \"apple\" in filename.lower() or \"aapl\" in filename.lower():\n            ticker = \"AAPL\"\n            company_name = \"Apple Inc.\"\n        elif \"morgan_stanley\" in filename.lower() or \"ms\" in filename.lower():\n            ticker = \"MS\"\n            company_name = \"Morgan Stanley\"\n        else:\n            ticker = \"CORP\"\n            company_name = \"Enterprise Corporation\" ",
+        "endLine": 44,
+        "title": "File Reading & Multi-Entity Ingestion (Apple, Morgan Stanley, Microsoft)",
+        "code": "    def load(self) -> List[Document]:\n        \"\"\"\n        Reads the file and parses major SEC 10-K sections into discrete Document objects.\n        \"\"\"\n        with open(self.file_path, \"r\", encoding=\"utf-8\", errors=\"ignore\") as f:\n            raw_text = f.read()\n\n        filename = os.path.basename(self.file_path)\n        fn_lower = filename.lower()\n        \n        # Infer ticker and company\n        if \"apple\" in fn_lower or \"aapl\" in fn_lower:\n            ticker = \"AAPL\"\n            company_name = \"Apple Inc.\"\n        elif \"morgan_stanley\" in fn_lower or \"ms_\" in fn_lower or fn_lower.startswith(\"ms\"):\n            ticker = \"MS\"\n            company_name = \"Morgan Stanley\"\n        elif \"microsoft\" in fn_lower or \"msft\" in fn_lower:\n            ticker = \"MSFT\"\n            company_name = \"Microsoft Corporation\"\n        else:\n            ticker = \"CORP\"\n            company_name = \"Enterprise Corporation\"\n\n        # Infer year\n        year_match = re.search(r\"202[0-9]\", filename)\n        fiscal_year = year_match.group(0) if year_match else \"2024\" ",
         "lineByLine": [
           "Line 17: `def load(self) -> List[Document]:` - Defines the `load` method that returns a list of LangChain `Document` objects.",
-          "Line 21: `with open(self.file_path, \"r\", encoding=\"utf-8\") as f:` - Safely opens the file in read-only mode with UTF-8 encoding. The `with` block automatically closes the file when done.",
-          "Line 22: `raw_text = f.read()` - Reads the full text of the file into memory as a string.",
-          "Line 24: `filename = os.path.basename(self.file_path)` - Gets just the filename (e.g. `'apple_10k_2024.txt'`) from the full path.",
-          "Line 27: `ticker = \"UNKNOWN\"` - Default ticker symbol fallback.",
-          "Line 28: `fiscal_year = \"2024\"` - Default fiscal year.",
-          "Line 30: `if \"apple\" in filename.lower() or \"aapl\" in filename.lower():` - Converts the filename to lowercase using `.lower()` and checks if 'apple' or 'aapl' is present. This makes the check case-insensitive.",
-          "Line 31: `ticker = \"AAPL\"` - Sets ticker to 'AAPL'.",
-          "Line 32: `company_name = \"Apple Inc.\"` - Sets full company name to 'Apple Inc.'.",
-          "Line 33: `elif \"morgan_stanley\" in filename.lower() or \"ms\" in filename.lower():` - Checks if Morgan Stanley is mentioned in the filename.",
-          "Line 34: `ticker = \"MS\"` - Sets ticker to 'MS'.",
-          "Line 35: `company_name = \"Morgan Stanley\"` - Sets company name to 'Morgan Stanley'.",
-          "Line 36: `else:` - Fallback branch for generic companies.",
-          "Line 37: `ticker = \"CORP\"` - Sets generic ticker.",
-          "Line 38: `company_name = \"Enterprise Corporation\"` - Sets generic name."
+          "Line 21: `with open(self.file_path, \"r\", encoding=\"utf-8\", errors=\"ignore\") as f:` - Safely opens filing in read-only mode with UTF-8 encoding and ignores encoding anomalies.",
+          "Line 22: `raw_text = f.read()` - Reads the full text of the file into memory.",
+          "Line 24: `filename = os.path.basename(self.file_path)` - Gets clean filename (e.g. `'microsoft_10k_2024.txt'`).",
+          "Lines 28-30: Checks for Apple (`AAPL`), setting company to 'Apple Inc.'.",
+          "Lines 31-33: Checks for Morgan Stanley (`MS`), setting company to 'Morgan Stanley'.",
+          "Lines 34-36: Checks for Microsoft (`MSFT`), setting company to 'Microsoft Corporation'.",
+          "Lines 42-43: `year_match = re.search(r\"202[0-9]\", filename)` - Uses regex to automatically extract fiscal year (`2024`, `2023`)."
         ],
         "beginnerConcepts": [
           {
@@ -114,51 +107,44 @@ export const PROJECT_MODULES = [
             "explanation": "A context manager that guarantees the file is properly closed after reading, preventing memory leaks."
           },
           {
-            "term": "`encoding=\"utf-8\"`",
-            "explanation": "Ensures currency signs ($), em-dashes, and percentages (%) in financial filings are decoded properly without crash errors."
+            "term": "`errors=\"ignore\"`",
+            "explanation": "Prevents crashes when reading messy EDGAR HTML/text filing dumps that contain non-standard Unicode characters."
           },
           {
-            "term": "`.lower()`",
-            "explanation": "Converts string characters to lowercase so that checks match regardless of capitalization (e.g., 'Apple', 'APPLE', 'apple')."
-          },
-          {
-            "term": "`os.path.basename`",
-            "explanation": "Extracts the filename from a complete path, removing the directory folder prefix."
+            "term": "Regex Year Extraction (`re.search(r\"202[0-9]\", ...)`",
+            "explanation": "Finds 4-digit years in filenames (e.g., `2024`) dynamically instead of hardcoding."
           }
         ],
-        "simpleExplanation": "We read the entire text of the SEC filing using UTF-8 encoding. We inspect the filename in lowercase to detect whether it is Apple or Morgan Stanley, and set the appropriate ticker ('AAPL' or 'MS') and company name.",
-        "whyWrittenThisWay": "Using `.lower()` prevents case-sensitivity bugs. Inferring the ticker symbol upfront allows every single text chunk to be tagged with metadata for precise filtering during RAG search.",
-        "interviewTips": "Explain how metadata tagging at the loader level allows downstream retrievers to filter by ticker, eliminating cross-company confusion."
+        "simpleExplanation": "Reads the SEC filing, detects whether it is Apple, Morgan Stanley, or Microsoft, and extracts the fiscal year to tag every chunk.",
+        "whyWrittenThisWay": "Dynamic multi-entity detection and regex year extraction make the loader universally compatible with any newly added company 10-K filing.",
+        "interviewTips": "Explain how multi-entity inference enables scalable zero-shot ingestion for all Fortune 500 10-K filings."
       },
       {
         "sectionId": "loader-sec-4",
-        "startLine": 40,
-        "endLine": 61,
-        "title": "Regex Section Splitting & Overview Document Creation",
-        "code": "        # Split document by major SEC Sections (PART I, PART II, ITEMS)\n        section_pattern = r\"(={10,}\\s*\nPART\\s+[I|II|III|IV]+\\s*-\\s*ITEM\\s+[0-9A-Z\\.]+[^\n]*\n={10,})\"\n        parts = re.split(section_pattern, raw_text)\n\n        documents = []\n        current_section = \"Header & General Information\"\n\n        # If header exists before first section marker\n        if len(parts) > 0 and not parts[0].startswith(\"===\"):\n            header_doc = Document(\n                page_content=parts[0].strip(),\n                metadata={\n                    \"source\": filename,\n                    \"ticker\": ticker,\n                    \"company\": company_name,\n                    \"fiscal_year\": fiscal_year,\n                    \"section\": \"Header & Overview\",\n                    \"doc_type\": \"10-K\"\n                }\n            )\n            documents.append(header_doc)",
+        "startLine": 45,
+        "endLine": 65,
+        "title": "Dual-Regex Section Splitting & EDGAR Header Parsing",
+        "code": "        # Regex supporting both formatted and raw SEC EDGAR section headers\n        section_pattern = r\"(?:={10,}\\s*\\n)?(PART\\s+[I|II|III|IV]+[\\s\\n\\-]+ITEM\\s+[0-9A-Z\\.]+[^\n]*)(?:\\n={10,})?\"\n        \n        # Split by sections\n        split_positions = [m.start() for m in re.finditer(section_pattern, raw_text, flags=re.IGNORECASE)]\n        \n        if not split_positions or len(split_positions) < 2:\n            # Fallback regex for raw SEC headings\n            alt_pattern = r\"\\n\\s*(ITEM\\s+[0-9A-Z\\.]+\\s*[\\.\\-:]?\\s*[A-Z\\s,\u2013\u2014]{3,60})\\n\"\n            split_positions = [m.start() for m in re.finditer(alt_pattern, raw_text, flags=re.IGNORECASE)]",
         "lineByLine": [
-          "Line 41: `section_pattern = r\"(={10,}\\s*\\nPART...)\"` - Regular expression pattern matching SEC section divider banners with capture parentheses `(...)` so delimiters are retained.",
-          "Line 42: `parts = re.split(section_pattern, raw_text)` - Splits the text by section dividers into an array containing header, body, header, body, etc.",
-          "Line 44: `documents = []` - Initializes an empty list to store generated `Document` objects.",
-          "Line 48: `if len(parts) > 0 and not parts[0].startswith(\"===\"):` - Checks if there is overview text before the first section divider.",
-          "Line 49: `header_doc = Document(...)` - Creates a LangChain `Document` for the introductory text.",
-          "Line 50: `page_content=parts[0].strip()` - Trims extra whitespace from the text.",
-          "Lines 51-58: `metadata={...}` - Attaches source filename, ticker, company name, fiscal year, section name, and document type ('10-K').",
-          "Line 60: `documents.append(header_doc)` - Appends the overview document to our list."
+          "Line 46: `section_pattern = r\"(?:={10,}\\s*\\n)?(PART...)\"` - Primary regex matching standard SEC section boundaries.",
+          "Line 49: `split_positions = [m.start() for m in re.finditer(section_pattern, ...)]` - Locates character offsets where each major Item begins.",
+          "Line 51: `if not split_positions or len(split_positions) < 2:` - Checks if primary regex found enough section headers.",
+          "Line 53: `alt_pattern = r\"\\n\\s*(ITEM\\s+[0-9A-Z\\.]+\\s*[\\.\\-:]?\\s*[A-Z\\s,\u2013\u2014]{3,60})\\n\"` - Defensive fallback regex capable of parsing raw SEC EDGAR ASCII text dumps.",
+          "Line 54: `split_positions = [m.start() for m in re.finditer(alt_pattern, ...)]` - Extracts positions using secondary pattern."
         ],
         "beginnerConcepts": [
           {
-            "term": "`re.split(pattern, text)` with Capture Group",
-            "explanation": "Splits a long text string based on a regex pattern. The parentheses `(...)` preserve the matched section title rather than discarding it."
+            "term": "Dual-Pattern Regex Fallback",
+            "explanation": "Using a primary regex pattern and automatically falling back to an alternative regex pattern if the document format differs."
           },
           {
-            "term": "`.strip()`",
-            "explanation": "Strips out leading and trailing blank spaces and newlines from a string."
+            "term": "`re.finditer`",
+            "explanation": "Finds all match locations in a text, returning match objects that give exact character start and end indices."
           }
         ],
-        "simpleExplanation": "We use a regular expression to locate SEC section divider bars (e.g. 'PART I - ITEM 1A'). We split the text at these points. If there is introductory text at the top of the filing, we package it into an overview Document with metadata.",
-        "whyWrittenThisWay": "Capturing the introductory text as its own Document ensures corporate overview data (state of incorporation, CIK, business summary) is preserved and searchable.",
-        "interviewTips": "Explain how regex section splitting is superior to fixed-size chunking for structured legal filings."
+        "simpleExplanation": "Uses intelligent regex patterns to find where major sections (Item 1A, Item 7, Item 8) begin, with an automatic fallback pattern for raw EDGAR filings.",
+        "whyWrittenThisWay": "SEC filings from different companies have varying header styles; a dual-regex strategy ensures robust section extraction regardless of formatting variations.",
+        "interviewTips": "Highlight defensive data engineering: fallback regex patterns prevent pipeline failures across heterogeneous SEC filing formats."
       },
       {
         "sectionId": "loader-sec-5",
