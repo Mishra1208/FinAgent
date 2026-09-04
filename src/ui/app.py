@@ -100,63 +100,142 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* FIX: Streamlit Tabs Complete Visibility & Contrast */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: #f1f5f9;
-        padding: 6px;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        margin-bottom: 16px;
+    /* ================================================================= */
+    /* BULLETPROOF TABS CONTRAST & VISIBILITY */
+    /* ================================================================= */
+    div[data-testid="stTabs"] {
+        margin-top: 12px;
+    }
+    div[data-testid="stTabs"] [data-baseweb="tab-list"],
+    .stTabs [data-baseweb="tab-list"],
+    div[role="tablist"] {
+        gap: 8px !important;
+        background-color: #f1f5f9 !important;
+        padding: 6px !important;
+        border-radius: 10px !important;
+        border: 1px solid #cbd5e1 !important;
+        margin-bottom: 20px !important;
     }
     
-    .stTabs [data-baseweb="tab"] {
+    div[data-testid="stTabs"] button,
+    .stTabs button,
+    button[data-baseweb="tab"],
+    div[role="tab"] {
         border-radius: 8px !important;
-        padding: 8px 18px !important;
+        padding: 10px 20px !important;
         background-color: transparent !important;
         border: none !important;
+        color: #1e293b !important;
+        font-weight: 600 !important;
     }
     
-    .stTabs [data-baseweb="tab"] p,
-    .stTabs [data-baseweb="tab"] span,
-    .stTabs [data-baseweb="tab"] div {
-        color: #334155 !important;
+    div[data-testid="stTabs"] button p,
+    div[data-testid="stTabs"] button div,
+    div[data-testid="stTabs"] button span,
+    .stTabs button p,
+    .stTabs button div,
+    .stTabs button span,
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] div,
+    button[data-baseweb="tab"] span,
+    div[role="tab"] p,
+    div[role="tab"] span,
+    div[role="tab"] div {
+        color: #1e293b !important;
         font-size: 15px !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         opacity: 1 !important;
         visibility: visible !important;
     }
     
-    .stTabs [aria-selected="true"] {
+    div[data-testid="stTabs"] button[aria-selected="true"],
+    .stTabs button[aria-selected="true"],
+    button[data-baseweb="tab"][aria-selected="true"],
+    div[role="tab"][aria-selected="true"] {
         background-color: #ffffff !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+        border: 1px solid #cbd5e1 !important;
     }
     
-    .stTabs [aria-selected="true"] p,
-    .stTabs [aria-selected="true"] span,
-    .stTabs [aria-selected="true"] div {
+    div[data-testid="stTabs"] button[aria-selected="true"] p,
+    div[data-testid="stTabs"] button[aria-selected="true"] span,
+    div[data-testid="stTabs"] button[aria-selected="true"] div,
+    .stTabs button[aria-selected="true"] p,
+    .stTabs button[aria-selected="true"] span,
+    .stTabs button[aria-selected="true"] div,
+    button[data-baseweb="tab"][aria-selected="true"] p,
+    button[data-baseweb="tab"][aria-selected="true"] span,
+    button[data-baseweb="tab"][aria-selected="true"] div {
         color: #1d4ed8 !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
     }
 
-    /* FIX: High Contrast Expanders for SEC Citations */
+    /* ================================================================= */
+    /* BULLETPROOF EXPANDER STYLING (SEC CITATIONS) */
+    /* ================================================================= */
     div[data-testid="stExpander"] {
         background-color: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
         margin-bottom: 12px !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+        overflow: hidden !important;
+    }
+    div[data-testid="stExpander"] details {
+        background-color: #ffffff !important;
+        border: none !important;
     }
     div[data-testid="stExpander"] summary {
+        background-color: #f8fafc !important;
         color: #0f172a !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    div[data-testid="stExpander"] summary:hover {
+        background-color: #f1f5f9 !important;
+        color: #1d4ed8 !important;
     }
     div[data-testid="stExpander"] summary p,
-    div[data-testid="stExpander"] summary span {
+    div[data-testid="stExpander"] summary span,
+    div[data-testid="stExpander"] summary div {
         color: #0f172a !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
     }
+    div[data-testid="stExpander"] summary svg {
+        fill: #0f172a !important;
+    }
+    div[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+        background-color: #ffffff !important;
+        padding: 16px !important;
+    }
+
+    /* ================================================================= */
+    /* BULLETPROOF TEXT INPUT & LABELS */
+    /* ================================================================= */
+    div[data-testid="stTextInput"] label,
+    div[data-testid="stTextInput"] label p {
+        color: #0f172a !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        margin-bottom: 6px !important;
+    }
+    div[data-baseweb="input"],
+    div[data-baseweb="base-input"] {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+    }
+    div[data-baseweb="input"] input,
+    div[data-baseweb="base-input"] input {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+    }
+    
     .sec-chunk-box {
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -177,7 +256,7 @@ st.markdown("""
         color: #334155;
         font-size: 11px;
         font-weight: 600;
-        padding: 2px 8px;
+        padding: 4px 10px;
         border-radius: 4px;
         margin-right: 6px;
         margin-top: 6px;
