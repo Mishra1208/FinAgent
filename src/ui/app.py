@@ -99,6 +99,89 @@ st.markdown("""
         font-size: 11px;
         font-weight: 700;
     }
+
+    /* FIX: Streamlit Tabs Complete Visibility & Contrast */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #f1f5f9;
+        padding: 6px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 16px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px !important;
+        padding: 8px 18px !important;
+        background-color: transparent !important;
+        border: none !important;
+    }
+    
+    .stTabs [data-baseweb="tab"] p,
+    .stTabs [data-baseweb="tab"] span,
+    .stTabs [data-baseweb="tab"] div {
+        color: #334155 !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    }
+    
+    .stTabs [aria-selected="true"] p,
+    .stTabs [aria-selected="true"] span,
+    .stTabs [aria-selected="true"] div {
+        color: #1d4ed8 !important;
+        font-weight: 700 !important;
+    }
+
+    /* FIX: High Contrast Expanders for SEC Citations */
+    div[data-testid="stExpander"] {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    }
+    div[data-testid="stExpander"] summary {
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+    div[data-testid="stExpander"] summary p,
+    div[data-testid="stExpander"] summary span {
+        color: #0f172a !important;
+        font-weight: 600 !important;
+    }
+    .sec-chunk-box {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 14px;
+        color: #0f172a;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .chunk-meta-chip {
+        display: inline-block;
+        background-color: #e2e8f0;
+        color: #334155;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-right: 6px;
+        margin-top: 6px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -234,54 +317,43 @@ if run_btn or user_query:
         # ------------------------------------------------------------------
         # Display Tabs for Report, Risks, and Citations
         # ------------------------------------------------------------------
-        # If user selected a risk preset, highlight the Risk Tab first!
-        if "Risk" in preset or "Supply Chain" in preset:
-            tab_risks, tab_report, tab_citations = st.tabs(["⚠️ Risk Factor Audit", "📄 Executive Dossier", "📚 SEC Citations"])
-            with tab_risks:
-                st.markdown(f"### ⚠️ Item 1A Risk Factors & Vulnerability Analysis ({company_name})")
-                for r in response.risk_factors:
-                    badge_class = "badge-critical" if r.severity == "CRITICAL" else "badge-high"
+        tab_report, tab_risks, tab_citations = st.tabs(["📄 Executive Dossier", "⚠️ Risk Factor Audit", "📚 SEC Citations"])
+        
+        with tab_report:
+            st.markdown(response.markdown_report)
+            
+        with tab_risks:
+            st.markdown(f"### ⚠️ Item 1A Risk Factors & Vulnerability Analysis ({company_name})")
+            for r in response.risk_factors:
+                badge_class = "badge-critical" if r.severity == "CRITICAL" else "badge-high"
+                st.markdown(f"""
+                <div class="risk-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 700; font-size: 16px; color: #0f172a;">{r.title}</span>
+                        <span class="{badge_class}">{r.severity}</span>
+                    </div>
+                    <div style="font-size: 13px; color: #475569; margin-bottom: 6px;"><strong>Category:</strong> {r.category}</div>
+                    <div style="font-size: 14px; color: #334155; line-height: 1.5;">{r.details}</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;"><em>Source: {r.source_section}</em></div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+        with tab_citations:
+            st.markdown(f"### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks ({company_name})")
+            retrieved = raw_state.get("retrieved_docs", [])
+            if not retrieved:
+                st.info("No raw chunks returned for this query.")
+            for idx, doc in enumerate(retrieved, 1):
+                sec_title = doc.get('section', 'SEC Filing Chunk')
+                rrf_val = doc.get('rrf_score', 0.0)
+                with st.expander(f"📖 Chunk #{idx}: {sec_title} (RRF Score: {rrf_val:.4f})", expanded=(idx == 1)):
                     st.markdown(f"""
-                    <div class="risk-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-weight: 700; font-size: 16px; color: #0f172a;">{r.title}</span>
-                            <span class="{badge_class}">{r.severity}</span>
-                        </div>
-                        <div style="font-size: 13px; color: #475569; margin-bottom: 6px;"><strong>Category:</strong> {r.category}</div>
-                        <div style="font-size: 14px; color: #334155; line-height: 1.5;">{r.details}</div>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 8px;"><em>Source: {r.source_section}</em></div>
+                    <div class="sec-chunk-box">{doc.get('content', '')}</div>
+                    <div style="margin-top: 8px;">
+                        <span class="chunk-meta-chip">🆔 Chunk: {doc.get('chunk_id')}</span>
+                        <span class="chunk-meta-chip">🏢 Ticker: {doc.get('ticker')}</span>
+                        <span class="chunk-meta-chip">📅 Fiscal Year: {doc.get('fiscal_year')}</span>
+                        <span class="chunk-meta-chip">🎯 RRF Rank Score: {rrf_val:.4f}</span>
                     </div>
                     """, unsafe_allow_html=True)
-            with tab_report:
-                st.markdown(response.markdown_report)
-            with tab_citations:
-                st.markdown(f"### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks ({company_name})")
-                for idx, doc in enumerate(raw_state.get("retrieved_docs", []), 1):
-                    with st.expander(f"Chunk #{idx}: {doc.get('section', 'SEC Filing')} (RRF Score: {doc.get('rrf_score', 0.0):.4f})"):
-                        st.text(doc.get("content", ""))
-                        st.caption(f"Chunk ID: {doc.get('chunk_id')} | Ticker: {doc.get('ticker')} | Year: {doc.get('fiscal_year')}")
-        else:
-            tab_report, tab_risks, tab_citations = st.tabs(["📄 Executive Dossier", "⚠️ Risk Factor Audit", "📚 SEC Citations"])
-            with tab_report:
-                st.markdown(response.markdown_report)
-            with tab_risks:
-                st.markdown(f"### ⚠️ Item 1A Risk Factors & Vulnerability Analysis ({company_name})")
-                for r in response.risk_factors:
-                    badge_class = "badge-critical" if r.severity == "CRITICAL" else "badge-high"
-                    st.markdown(f"""
-                    <div class="risk-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-weight: 700; font-size: 16px; color: #0f172a;">{r.title}</span>
-                            <span class="{badge_class}">{r.severity}</span>
-                        </div>
-                        <div style="font-size: 13px; color: #475569; margin-bottom: 6px;"><strong>Category:</strong> {r.category}</div>
-                        <div style="font-size: 14px; color: #334155; line-height: 1.5;">{r.details}</div>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 8px;"><em>Source: {r.source_section}</em></div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            with tab_citations:
-                st.markdown(f"### 📚 Ground-Truth SEC Form 10-K Retrieved Chunks ({company_name})")
-                for idx, doc in enumerate(raw_state.get("retrieved_docs", []), 1):
-                    with st.expander(f"Chunk #{idx}: {doc.get('section', 'SEC Filing')} (RRF Score: {doc.get('rrf_score', 0.0):.4f})"):
-                        st.text(doc.get("content", ""))
-                        st.caption(f"Chunk ID: {doc.get('chunk_id')} | Ticker: {doc.get('ticker')} | Year: {doc.get('fiscal_year')}")
+

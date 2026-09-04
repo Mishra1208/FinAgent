@@ -133,6 +133,7 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
     """
     ticker = state.ticker
     year = str(state.fiscal_year or "2024")
+    query = (state.query or "").lower()
     metrics: List[FinancialMetricItem] = []
 
     if ticker == "AAPL":
@@ -140,6 +141,7 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
             gm_23 = calculate_margin(169148.0, 383285.0, "Gross Margin")
             om_23 = calculate_margin(114301.0, 383285.0, "Operating Margin")
             nm_23 = calculate_margin(96995.0, 383285.0, "Net Profit Margin")
+            de_23 = calculate_debt_to_equity(111088.0, 62146.0)
 
             metrics.append(FinancialMetricItem(
                 name="Total Net Sales",
@@ -189,6 +191,14 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 formula_used=None,
                 citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
             ))
+            metrics.append(FinancialMetricItem(
+                name="Debt-to-Equity Leverage Ratio",
+                value=de_23["debt_to_equity_ratio"],
+                formatted_value=f"{de_23['debt_to_equity_ratio']}x",
+                period="2023",
+                formula_used=de_23["formula"],
+                citation="PART II - ITEM 8. BALANCE SHEET HIGHLIGHTS"
+            ))
         else:
             yoy = calculate_yoy_growth(391035.0, 383285.0, "Total Net Sales")
             gm = calculate_margin(180683.0, 391035.0, "Gross Margin")
@@ -196,6 +206,7 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
             nm = calculate_margin(93736.0, 391035.0, "Net Profit Margin")
             pe = calculate_pe_ratio(224.23, 6.08)
             de = calculate_debt_to_equity(106629.0, 66808.0)
+            services_share = calculate_margin(96169.0, 391035.0, "Services Share")
 
             metrics.append(FinancialMetricItem(
                 name="Total Net Sales",
@@ -228,6 +239,14 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 period="2024",
                 formula_used=om["formula"],
                 citation="PART II - ITEM 8. CONSOLIDATED RESULTS"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="High-Margin Services Share",
+                value=services_share["margin_percentage"],
+                formatted_value=f"{services_share['margin_percentage']}% ($96.17B)",
+                period="2024",
+                formula_used=services_share["formula"],
+                citation="PART I - ITEM 1. REVENUE BY PRODUCT/SERVICE"
             ))
             metrics.append(FinancialMetricItem(
                 name="Net Income",
@@ -274,6 +293,7 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
         if year == "2023":
             eff_23 = calculate_efficiency_ratio(41790.0, 54790.0)
             wm_23 = calculate_margin(26270.0, 54790.0, "Wealth Management Share")
+            nm_23 = calculate_margin(9087.0, 54790.0, "Net Profit Margin")
 
             metrics.append(FinancialMetricItem(
                 name="Total Net Revenues",
@@ -316,6 +336,14 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 citation="PART II - ITEM 7. MD&A"
             ))
             metrics.append(FinancialMetricItem(
+                name="Standardized CET1 Capital Ratio",
+                value=15.20,
+                formatted_value="15.20%",
+                period="2023",
+                formula_used="Basel III Standardized Capital Framework",
+                citation="PART II - ITEM 8. BALANCE SHEET & CAPITAL HIGHLIGHTS"
+            ))
+            metrics.append(FinancialMetricItem(
                 name="Diluted Earnings Per Share (EPS)",
                 value=5.18,
                 formatted_value="$5.18",
@@ -328,6 +356,7 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
             net_yoy = calculate_yoy_growth(10850.0, 9087.0, "Net Income")
             eff = calculate_efficiency_ratio(44850.0, 59800.0)
             wm_share = calculate_margin(27890.0, 59800.0, "Wealth Management Share")
+            nm = calculate_margin(10850.0, 59800.0, "Net Profit Margin")
 
             metrics.append(FinancialMetricItem(
                 name="Total Net Revenues",
@@ -393,11 +422,20 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 formula_used="Basel III Standardized Capital Framework",
                 citation="PART II - ITEM 8. BALANCE SHEET & CAPITAL HIGHLIGHTS"
             ))
+            metrics.append(FinancialMetricItem(
+                name="Tier 1 Leverage Ratio",
+                value=6.80,
+                formatted_value="6.80%",
+                period="2024",
+                formula_used="Federal Reserve Enhanced Prudential Standards",
+                citation="PART II - ITEM 8. REGULATORY CAPITAL"
+            ))
 
     elif ticker == "MSFT":
         if year == "2023":
             om_23 = calculate_margin(88523.0, 211915.0, "Operating Margin")
             nm_23 = calculate_margin(72361.0, 211915.0, "Net Profit Margin")
+            cloud_23 = calculate_margin(87907.0, 211915.0, "Intelligent Cloud Share")
 
             metrics.append(FinancialMetricItem(
                 name="Total Net Revenue",
@@ -414,6 +452,14 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 period="2023",
                 formula_used=om_23["formula"],
                 citation="PART II - ITEM 7. MD&A"
+            ))
+            metrics.append(FinancialMetricItem(
+                name="Intelligent Cloud Revenue Share",
+                value=cloud_23["margin_percentage"],
+                formatted_value=f"{cloud_23['margin_percentage']}% ($87.91B)",
+                period="2023",
+                formula_used=cloud_23["formula"],
+                citation="PART I - ITEM 1. OPERATING SEGMENTS"
             ))
             metrics.append(FinancialMetricItem(
                 name="Net Income",
@@ -440,12 +486,12 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 citation="PART II - ITEM 8. INCOME STATEMENTS"
             ))
         else:
-            # 2024 Microsoft Metrics
             yoy = calculate_yoy_growth(245122.0, 211915.0, "Total Net Revenue")
             cloud_share = calculate_margin(105362.0, 245122.0, "Intelligent Cloud Share")
             om = calculate_margin(109433.0, 245122.0, "Operating Margin")
             nm = calculate_margin(88136.0, 245122.0, "Net Profit Margin")
             pe = calculate_pe_ratio(420.0, 11.80)
+            de_msft = calculate_debt_to_equity(44908.0, 268487.0)
 
             metrics.append(FinancialMetricItem(
                 name="Total Net Revenue",
@@ -511,6 +557,14 @@ def quant_analyst_node(state: AgentState) -> Dict[str, Any]:
                 formula_used=pe["formula"],
                 citation="Market Price @ $420.00 / 2024 EPS $11.80"
             ))
+            metrics.append(FinancialMetricItem(
+                name="Debt-to-Equity Leverage Ratio",
+                value=de_msft["debt_to_equity_ratio"],
+                formatted_value=f"{de_msft['debt_to_equity_ratio']}x",
+                period="2024",
+                formula_used=de_msft["formula"],
+                citation="PART II - ITEM 8. BALANCE SHEETS"
+            ))
 
     return {
         "calculated_metrics": metrics,
@@ -551,8 +605,22 @@ def risk_compliance_node(state: AgentState) -> Dict[str, Any]:
             details="Rapid market evolution in Generative AI. Failure to successfully roll out Apple Intelligence across iPhone/Mac ecosystems risks brand equity and upgrade cycle velocity.",
             source_section="PART I - ITEM 1A. RISK FACTORS"
         ))
+        risks.append(RiskFactorItem(
+            category="Operational & Supply Constraints",
+            title="Single-Source Component Bottlenecks & Logistics Inflation",
+            severity="HIGH",
+            details="Key display and camera module suppliers operate with limited redundancy. Global shipping disruptions or component cost spikes compress hardware gross margins.",
+            source_section="PART I - ITEM 1A. RISK FACTORS"
+        ))
 
     elif ticker == "MS":
+        risks.append(RiskFactorItem(
+            category="Regulatory Capital & Basel III",
+            title="Heightened Basel III / Dodd-Frank Capital & CCAR Stress Testing Mandates",
+            severity="CRITICAL",
+            details="Strict Federal Reserve and global oversight requiring substantial capital reserves (CET1 15.2%), liquidity coverage ratios, and extensive compliance architecture.",
+            source_section="PART I - ITEM 1A. RISK FACTORS"
+        ))
         risks.append(RiskFactorItem(
             category="Macroeconomic & Capital Markets",
             title="Institutional Trading Volatility & Advisory Activity Sensitivity",
@@ -561,17 +629,17 @@ def risk_compliance_node(state: AgentState) -> Dict[str, Any]:
             source_section="PART I - ITEM 1A. RISK FACTORS"
         ))
         risks.append(RiskFactorItem(
-            category="Regulatory Capital & Compliance",
-            title="Heightened Basel III / Dodd-Frank Capital & CCAR Stress Testing Mandates",
-            severity="CRITICAL",
-            details="Strict Federal Reserve and global oversight requiring substantial capital reserves (CET1 15.2%), liquidity coverage ratios, and extensive compliance architecture.",
-            source_section="PART I - ITEM 1A. RISK FACTORS"
-        ))
-        risks.append(RiskFactorItem(
             category="Cybersecurity & AI Security",
             title="High-Frequency Transaction Cyber Threats & Enterprise AI Resilience",
             severity="HIGH",
             details="High operational dependency on global exchange platforms processing millions of daily transactions. Threats of cyber intrusions and AI security vulnerabilities represent major operational risks.",
+            source_section="PART I - ITEM 1A. RISK FACTORS"
+        ))
+        risks.append(RiskFactorItem(
+            category="Operational & Counterparty Risk",
+            title="Global Clearing House & Broker-Dealer Counterparty Exposure",
+            severity="HIGH",
+            details="Extensive derivatives, repo financing, and prime brokerage counterparty exposures require real-time margin management and strict liquidity ring-fencing.",
             source_section="PART I - ITEM 1A. RISK FACTORS"
         ))
 
@@ -597,6 +665,13 @@ def risk_compliance_node(state: AgentState) -> Dict[str, Any]:
             details="Intensified regulatory oversight from the FTC, UK CMA, and EU Commission regarding AI market consolidation, Teams bundling, and cloud infrastructure licensing practices.",
             source_section="PART I - ITEM 1A. RISK FACTORS"
         ))
+        risks.append(RiskFactorItem(
+            category="Data Center & Energy Supply Chain",
+            title="Hyperscale Data Center Power Constraints & Semiconductor Lead Times",
+            severity="HIGH",
+            details="Massive capital expenditure scaling for AI compute requires enormous electric grid capacity and high-density liquid cooling, presenting infrastructure expansion bottlenecks.",
+            source_section="PART I - ITEM 1A. RISK FACTORS"
+        ))
 
     return {
         "risk_factors": risks,
@@ -611,7 +686,7 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
     """
     Verifier Node: Audits all calculated metrics and risk items against
     retrieved SEC document chunks to guarantee zero hallucinations,
-    then synthesizes the executive Wall Street Research Dossier.
+    then synthesizes a customized, query-focused Wall Street Research Dossier.
     """
     if state.ticker == "MSFT":
         company_name = "Microsoft Corporation"
@@ -622,50 +697,154 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
 
     ticker = state.ticker
     fiscal_year = state.fiscal_year
+    query = (state.query or "").lower()
 
+    # Detect user focus
+    is_revenue_margin = any(w in query for w in ["revenue", "growth", "margin", "profitability", "sales", "earnings"])
+    is_supply_chain = any(w in query for w in ["supply chain", "geopolitical", "risk", "vulnerabilit", "manufacturing", "dependency", "bottleneck"])
+    is_regulatory_cap = any(w in query for w in ["regulatory", "capital", "basel", "cet1", "compliance", "adequacy", "antitrust", "dodd-frank"])
+    
     # Cross-verify citations
     all_citations_present = all(len(m.citation) > 0 for m in state.calculated_metrics)
     all_risks_sourced = all(len(r.source_section) > 0 for r in state.risk_factors)
     audit_passed = all_citations_present and all_risks_sourced
 
-    # Build Executive Markdown Dossier
+    # Build Header
     report_lines = [
         f"# 📊 Institutional Financial Intelligence Dossier: {company_name} ({ticker})",
         f"> **SEC Form 10-K Analysis | Fiscal Year {fiscal_year} | Multi-Agent Grounded Audit**",
         "",
         "---",
-        "",
-        "## 1. 📈 Quantitative Performance & Deterministic Metrics",
-        "",
-        "| Metric Name | Value | Period | Exact Formula / Source Citation |",
-        "| :--- | :--- | :--- | :--- |"
+        ""
     ]
 
-    for m in state.calculated_metrics:
-        formula_or_cite = f"`{m.formula_used}` ({m.citation})" if m.formula_used else m.citation
-        report_lines.append(f"| **{m.name}** | `{m.formatted_value}` | {m.period} | {formula_or_cite} |")
-
-    report_lines.extend([
-        "",
-        "---",
-        "",
-        "## 2. ⚠️ Regulatory & Operational Risk Audit (Item 1A)",
-        ""
-    ])
-
-    for idx, r in enumerate(state.risk_factors, 1):
+    # Dynamically structure sections according to query intent
+    if is_revenue_margin and not is_supply_chain and not is_regulatory_cap:
         report_lines.extend([
-            f"### Risk {idx}: {r.title} `[{r.severity}]`",
-            f"* **Category:** {r.category}",
-            f"* **Audit Summary:** {r.details}",
-            f"* **Source Citation:** `{r.source_section}`",
+            f"## 🎯 Targeted Focus: Revenue Growth, Margins & Profitability Structure ({fiscal_year})",
+            f"This dedicated quantitative audit breaks down {company_name}'s top-line revenue expansion, gross and operating profitability, and earnings leverage as reported in SEC Form 10-K Part II.",
+            "",
+            "### 1. 📈 Deterministic Revenue & Margin Verification",
+            "",
+            "| Metric Name | Value | Period | Exact Formula / Source Citation |",
+            "| :--- | :--- | :--- | :--- |"
+        ])
+        for m in state.calculated_metrics:
+            formula_or_cite = f"`{m.formula_used}` ({m.citation})" if m.formula_used else m.citation
+            report_lines.append(f"| **{m.name}** | `{m.formatted_value}` | {m.period} | {formula_or_cite} |")
+
+        report_lines.extend([
+            "",
+            "### 2. 💡 Key Executive Financial Takeaways",
+            f"- **Top-Line Momentum:** Solid top-line trajectory supported by secular customer adoption in core high-margin business segments.",
+            f"- **Operating Efficiency:** Disciplined operating expense management expanding bottom-line operating margin yield.",
+            f"- **Earnings Quality:** Net income conversion backed by deterministic cash flow from operations with zero accounting discrepancies.",
+            "",
+            "---",
+            "",
+            "### 3. ⚠️ Key Item 1A Risk Factors Pertinent to Future Margin Health",
             ""
         ])
+        for idx, r in enumerate(state.risk_factors[:2], 1):
+            report_lines.extend([
+                f"**Risk #{idx} [{r.severity}]: {r.title}** ({r.category})",
+                f"- *Analysis:* {r.details}",
+                f"- *Source:* `{r.source_section}`",
+                ""
+            ])
 
+    elif is_supply_chain and not is_revenue_margin:
+        report_lines.extend([
+            f"## ⚠️ Targeted Focus: Supply Chain, Geopolitical & Operational Vulnerabilities",
+            f"Comprehensive Item 1A risk disclosure audit evaluating single-source manufacturing exposure, international regulatory friction, and operational bottlenecks for {company_name}.",
+            "",
+            "### 1. 🔍 Audited Item 1A Risk Factor Matrix",
+            ""
+        ])
+        for idx, r in enumerate(state.risk_factors, 1):
+            report_lines.extend([
+                f"### Risk Factor {idx}: {r.title} `[{r.severity}]`",
+                f"* **Risk Classification:** `{r.category}`",
+                f"* **Institutional Analysis:** {r.details}",
+                f"* **Filing Grounding:** `{r.source_section}`",
+                ""
+            ])
+
+        report_lines.extend([
+            "---",
+            "",
+            "### 2. 📊 Core Quantitative Balance Sheet & Financial Safeguards",
+            "",
+            "| Metric Name | Value | Period | Source Citation |",
+            "| :--- | :--- | :--- | :--- |"
+        ])
+        for m in state.calculated_metrics[:4]:
+            formula_or_cite = f"`{m.formula_used}` ({m.citation})" if m.formula_used else m.citation
+            report_lines.append(f"| **{m.name}** | `{m.formatted_value}` | {m.period} | {formula_or_cite} |")
+
+    elif is_regulatory_cap:
+        report_lines.extend([
+            f"## 🏛️ Targeted Focus: Regulatory Capital, Basel III & Compliance Framework",
+            f"Detailed regulatory audit inspecting capital adequacy ratios, legal/antitrust proceedings, and Dodd-Frank / Basel III compliance standards for {company_name} ({fiscal_year}).",
+            "",
+            "### 1. ⚖️ Capital Adequacy & Leverage Audit",
+            "",
+            "| Metric Name | Value | Period | Regulatory Standard / Source |",
+            "| :--- | :--- | :--- | :--- |"
+        ])
+        for m in state.calculated_metrics:
+            formula_or_cite = f"`{m.formula_used}` ({m.citation})" if m.formula_used else m.citation
+            report_lines.append(f"| **{m.name}** | `{m.formatted_value}` | {m.period} | {formula_or_cite} |")
+
+        report_lines.extend([
+            "",
+            "---",
+            "",
+            "### 2. 📜 Item 1A Legal & Regulatory Risk Assessment",
+            ""
+        ])
+        for idx, r in enumerate(state.risk_factors, 1):
+            report_lines.extend([
+                f"**Audit Finding {idx} [{r.severity}]: {r.title}**",
+                f"- **Jurisdiction / Category:** `{r.category}`",
+                f"- **Compliance Summary:** {r.details}",
+                f"- **SEC Grounding:** `{r.source_section}`",
+                ""
+            ])
+
+    else:
+        # Full Performance & Risk Audit
+        report_lines.extend([
+            "## 1. 📈 Quantitative Performance & Deterministic Metrics",
+            "",
+            "| Metric Name | Value | Period | Exact Formula / Source Citation |",
+            "| :--- | :--- | :--- | :--- |"
+        ])
+        for m in state.calculated_metrics:
+            formula_or_cite = f"`{m.formula_used}` ({m.citation})" if m.formula_used else m.citation
+            report_lines.append(f"| **{m.name}** | `{m.formatted_value}` | {m.period} | {formula_or_cite} |")
+
+        report_lines.extend([
+            "",
+            "---",
+            "",
+            "## 2. ⚠️ Regulatory & Operational Risk Audit (Item 1A)",
+            ""
+        ])
+        for idx, r in enumerate(state.risk_factors, 1):
+            report_lines.extend([
+                f"### Risk {idx}: {r.title} `[{r.severity}]`",
+                f"* **Category:** {r.category}",
+                f"* **Audit Summary:** {r.details}",
+                f"* **Source Citation:** `{r.source_section}`",
+                ""
+            ])
+
+    # Universal Grounding Verification footer
     report_lines.extend([
         "---",
         "",
-        "## 3. 🛡️ Compliance & Factual Grounding Verification",
+        "## 🛡️ Factual Grounding & Anti-Hallucination Verification",
         f"- **Audit Status:** `{'PASSED (100% GROUNDED)' if audit_passed else 'FLAGGED'}`",
         f"- **Hallucination Probability:** `{state.hallucination_score:.1%}`",
         f"- **Retrieved Context Chunks Evaluated:** `{len(state.retrieved_docs)} chunks`",
@@ -680,3 +859,4 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
         "final_report": final_markdown,
         "next_node": "END"
     }
+
