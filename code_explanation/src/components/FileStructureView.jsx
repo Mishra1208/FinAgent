@@ -240,6 +240,25 @@ export default function FileStructureView({ onSelectFile }) {
           badge: "Python Dependencies"
         }
       ]
+    },
+    {
+      folder: "12. End-to-End System Story & Pipeline Architecture",
+      description: "Full chronological construction order, file communication graph, and step-by-step Morgan Stanley 10-K execution walkthrough",
+      color: "indigo",
+      files: [
+        {
+          name: "Chronological Build Story & File Dependencies",
+          id: "pipeline-build-story",
+          role: "Explains how the project is constructed from scratch in 7 phases (Data -> RAG -> Tools -> Schemas -> Agents -> Benchmark -> UI) and how files communicate through state.",
+          badge: "Build Story & Graph"
+        },
+        {
+          name: "Morgan Stanley 10-K Execution Walkthrough",
+          id: "pipeline-execution-walkthrough",
+          role: "Step-by-step 11-hop walkthrough tracing a real query when morgan_stanley_10k_2024.txt is ingested to final 96.4% grounded UI dashboard rendering.",
+          badge: "Runtime Walkthrough"
+        }
+      ]
     }
   ];
 
