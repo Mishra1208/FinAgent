@@ -22,7 +22,6 @@ import {
   Boxes,
   HelpCircle,
   Lightbulb,
-  ExternalLink,
   Workflow,
   Network
 } from 'lucide-react';
@@ -286,41 +285,41 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
 
   return (
     <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 max-w-5xl mx-auto">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-3xl p-8 card-shadow space-y-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-xs font-semibold text-indigo-200">
-          <Network className="w-3.5 h-3.5 text-indigo-300" />
+      {/* Light Top Banner */}
+      <div className="bg-gradient-to-br from-white via-indigo-50/40 to-blue-50/60 border border-indigo-200/80 rounded-3xl p-6 sm:p-8 card-shadow space-y-4 shadow-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100/70 border border-indigo-200 text-xs font-bold text-indigo-800">
+          <Network className="w-3.5 h-3.5 text-indigo-600" />
           Category 12: End-to-End System Story & Flowchart Architecture
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
           How FinAgent Works: Full Story, File Connections & Flowchart
         </h2>
-        <p className="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed">
-          Explore the exact step-by-step connection graph of the FinAgent system. See how files communicate data through state schemas, why each file connects to the next, and follow the complete journey when <code className="px-1.5 py-0.5 bg-indigo-900/60 text-indigo-200 rounded font-mono text-xs">morgan_stanley_10k_2024.txt</code> is analyzed.
+        <p className="text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed">
+          Explore the exact step-by-step connection graph of the FinAgent system in a clean, easy-to-read view. See how files communicate data through state schemas, why each file connects to the next, and follow the complete journey when <code className="px-2 py-0.5 bg-indigo-100 text-indigo-900 rounded font-mono text-xs font-semibold border border-indigo-200">morgan_stanley_10k_2024.txt</code> is analyzed.
         </p>
 
-        {/* Story Tab Switcher */}
-        <div className="flex flex-wrap items-center gap-2 pt-2">
+        {/* Light Tab Switcher */}
+        <div className="flex flex-wrap items-center gap-2.5 pt-2">
           <button
             onClick={() => setActiveStoryTab('build')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
               activeStoryTab === 'build'
-                ? 'bg-white text-indigo-900 shadow-md'
-                : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 ring-2 ring-indigo-600/30'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
             }`}
           >
-            <Workflow className="w-4 h-4 text-indigo-600" />
+            <Workflow className="w-4 h-4" />
             1. Chronological Build Order (7 Phases)
           </button>
           <button
             onClick={() => setActiveStoryTab('walkthrough')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
               activeStoryTab === 'walkthrough'
-                ? 'bg-white text-indigo-900 shadow-md'
-                : 'bg-white/10 text-white hover:bg-white/20'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20 ring-2 ring-emerald-600/30'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
             }`}
           >
-            <GitBranch className="w-4 h-4 text-emerald-600" />
+            <GitBranch className="w-4 h-4" />
             2. Morgan Stanley 10-K Execution Flowchart (13 Steps)
           </button>
         </div>
@@ -329,7 +328,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       {/* TAB 1: CHRONOLOGICAL BUILD STORY */}
       {activeStoryTab === 'build' && (
         <div className="space-y-8">
-          {/* SECTION HEADER & FLOW DIAGRAM BANNER */}
+          {/* SECTION HEADER & LIGHT FLOW DIAGRAM BOX */}
           <div className="space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2.5">
@@ -350,25 +349,27 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
               </span>
             </div>
 
-            {/* VISUAL FLOWCHART SUMMARY BOX */}
-            <div className="bg-slate-900 text-white rounded-2xl p-5 card-shadow space-y-3">
+            {/* LIGHT-THEMED VISUAL FLOWCHART SUMMARY BOX */}
+            <div className="bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/40 border border-indigo-200/80 rounded-2xl p-5 card-shadow shadow-xs space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 font-mono flex items-center gap-1.5">
-                  <Workflow className="w-4 h-4" /> High-Level Architecture Flowchart:
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 font-mono flex items-center gap-1.5">
+                  <Workflow className="w-4 h-4 text-indigo-600" /> High-Level Architecture Flowchart:
                 </span>
-                <span className="text-[11px] text-slate-400 font-mono">Data Flow ➔ Left to Right</span>
+                <span className="text-[11px] font-semibold text-indigo-700 font-mono bg-indigo-100/80 px-2 py-0.5 rounded border border-indigo-200">
+                  Data Flow ➔ Left to Right
+                </span>
               </div>
               
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 pt-1 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 pt-1 text-center">
                 {buildPhases.map((bp) => (
-                  <div key={bp.phaseNumber} className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-2.5 space-y-1.5 flex flex-col justify-between">
-                    <span className="text-[10px] font-mono font-bold text-indigo-300 block">
+                  <div key={bp.phaseNumber} className="bg-white border border-slate-200 hover:border-indigo-300 rounded-xl p-3 space-y-1.5 flex flex-col justify-between shadow-2xs transition-all">
+                    <span className="text-[10px] font-mono font-bold text-indigo-600 block bg-indigo-50 py-0.5 rounded border border-indigo-100">
                       Phase 0{bp.phaseNumber}
                     </span>
-                    <span className="text-xs font-bold text-white block leading-tight">
+                    <span className="text-xs font-bold text-slate-900 block leading-tight">
                       {bp.phaseTitle.split(' ')[0]} {bp.phaseTitle.split(' ')[1]}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono block truncate bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                    <span className="text-[10px] text-slate-600 font-mono block truncate bg-slate-50 px-1 py-0.5 rounded border border-slate-200">
                       {bp.folderLocation}
                     </span>
                   </div>
@@ -382,17 +383,17 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
             {buildPhases.map((phase) => (
               <div 
                 key={phase.phaseNumber}
-                className="bg-white border border-slate-200 rounded-2xl p-6 card-shadow space-y-4 transition-all hover:border-indigo-300"
+                className="bg-white border border-slate-200 rounded-2xl p-6 card-shadow space-y-4 transition-all hover:border-indigo-300 hover:shadow-md"
               >
                 {/* Header with clear file & folder location */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-900 text-white font-mono font-bold text-sm flex items-center justify-center shadow-xs">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white font-mono font-bold text-sm flex items-center justify-center shadow-xs">
                       0{phase.phaseNumber}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 font-mono">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 font-mono">
                           {phase.badge}
                         </span>
                         <span className="text-slate-300">•</span>
@@ -422,7 +423,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                       Inter-Connected Files:
                     </span>
                     {phase.connectedFiles.map((cf, idx) => (
-                      <span key={idx} className="font-mono text-[11px] font-medium bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                      <span key={idx} className="font-mono text-[11px] font-semibold bg-slate-50 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
                         {cf}
                       </span>
                     ))}
@@ -432,7 +433,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                 {/* 3 Plain-English Columns */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                   {/* 1. Why Built First */}
-                  <div className="bg-slate-50 rounded-xl p-4 space-y-2 border border-slate-200/70">
+                  <div className="bg-slate-50/80 rounded-xl p-4 space-y-2 border border-slate-200/80">
                     <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                       <HelpCircle className="w-4 h-4 text-blue-600 shrink-0" />
                       1. Why We Build This First:
@@ -443,7 +444,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                   </div>
 
                   {/* 2. What It Performs */}
-                  <div className="bg-indigo-50/60 rounded-xl p-4 space-y-2 border border-indigo-100">
+                  <div className="bg-indigo-50/50 rounded-xl p-4 space-y-2 border border-indigo-100">
                     <div className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
                       <Zap className="w-4 h-4 text-indigo-600 shrink-0" />
                       2. What It Performs:
@@ -454,7 +455,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                   </div>
 
                   {/* 3. Connection to Next File */}
-                  <div className="bg-emerald-50/60 rounded-xl p-4 space-y-2 border border-emerald-100">
+                  <div className="bg-emerald-50/50 rounded-xl p-4 space-y-2 border border-emerald-100">
                     <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
                       <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0" />
                       3. How It Connects to Next File:
@@ -465,12 +466,12 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                   </div>
                 </div>
 
-                {/* Data Passed Output Box */}
-                <div className="bg-slate-900 text-slate-100 rounded-xl p-3.5 text-xs font-mono flex items-start gap-2.5 shadow-inner">
-                  <span className="text-emerald-400 font-bold shrink-0 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/80">
+                {/* Light-Themed Data Passed Output Box */}
+                <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-xl p-3.5 text-xs font-mono text-emerald-950 flex items-start gap-2.5 shadow-2xs">
+                  <span className="text-white font-bold shrink-0 bg-emerald-600 px-2.5 py-0.5 rounded shadow-xs">
                     DATA PASSED ➔
                   </span>
-                  <span className="text-slate-200 leading-relaxed">{phase.dataOutput}</span>
+                  <span className="text-emerald-900 leading-relaxed font-semibold">{phase.dataOutput}</span>
                 </div>
               </div>
             ))}
@@ -478,7 +479,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
         </div>
       )}
 
-      {/* TAB 2: STEP-BY-STEP MORGAN STANLEY RUNTIME WALKTHROUGH WITH INTERACTIVE FLOWCHART */}
+      {/* TAB 2: STEP-BY-STEP MORGAN STANLEY RUNTIME WALKTHROUGH WITH LIGHT-THEMED FLOWCHART */}
       {activeStoryTab === 'walkthrough' && (
         <div className="space-y-8">
           {/* SECTION HEADER */}
@@ -492,7 +493,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                   Step-by-Step Runtime Execution Flowchart (Morgan Stanley 10-K Journey)
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Follow the exact journey from the moment <code className="text-emerald-700 font-mono font-bold">morgan_stanley_10k_2024.txt</code> is added to the final 96.4% grounded UI dashboard.
+                  Follow the exact journey from the moment <code className="text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-bold">morgan_stanley_10k_2024.txt</code> is added to the final 96.4% grounded UI dashboard.
                 </p>
               </div>
             </div>
@@ -501,52 +502,52 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
             </span>
           </div>
 
-          {/* INTERACTIVE VISUAL FLOWCHART GRAPH */}
-          <div className="bg-slate-900 text-white rounded-3xl p-6 card-shadow space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          {/* LIGHT-THEMED INTERACTIVE VISUAL FLOWCHART GRAPH */}
+          <div className="bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 border border-slate-200 rounded-3xl p-6 card-shadow shadow-sm space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-1.5">
-                  <Workflow className="w-4 h-4" /> Interactive Visual Connection Graph:
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 font-mono flex items-center gap-1.5">
+                  <Workflow className="w-4 h-4 text-emerald-600" /> Interactive Visual Connection Graph:
                 </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   Click any node in the flowchart to highlight its step details below.
                 </p>
               </div>
-              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold border border-emerald-500/30">
+              <span className="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-mono text-[11px] font-bold border border-emerald-200">
                 13 Connected Nodes
               </span>
             </div>
 
-            {/* FLOWCHART NODES GRID */}
-            <div className="space-y-3">
+            {/* FLOWCHART NODES GRID IN LIGHT THEME */}
+            <div className="space-y-2.5">
               {morganStanleyFlowSteps.map((stepItem, idx) => {
                 const IconComp = stepItem.icon;
                 const isLast = idx === morganStanleyFlowSteps.length - 1;
                 return (
-                  <div key={stepItem.step} className="space-y-2">
+                  <div key={stepItem.step} className="space-y-1.5">
                     <div 
                       onClick={() => setActiveStepIndex(stepItem.step === activeStepIndex ? null : stepItem.step)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                         activeStepIndex === stepItem.step
-                          ? 'bg-slate-800 border-emerald-400 shadow-lg ring-2 ring-emerald-500/30'
-                          : 'bg-slate-800/70 border-slate-700 hover:bg-slate-800 hover:border-slate-500'
+                          ? 'bg-emerald-50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                          : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-emerald-300 shadow-2xs'
                       }`}
                     >
                       {/* Left Side: Step Icon & Title */}
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs">
                           {stepItem.step < 10 ? `0${stepItem.step}` : stepItem.step}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-bold text-white">
+                            <span className="text-xs sm:text-sm font-bold text-slate-900">
                               {stepItem.title}
                             </span>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-emerald-300 border border-slate-700">
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-semibold">
                               {stepItem.folder}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-300 truncate mt-0.5">
+                          <p className="text-xs text-slate-600 truncate mt-0.5">
                             {stepItem.shortSummary}
                           </p>
                         </div>
@@ -554,17 +555,17 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
 
                       {/* Right Side: Exact File Location Badge */}
                       <div className="shrink-0 flex items-center gap-2 text-right">
-                        <div className="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-xs font-bold text-blue-300">
+                        <div className="bg-blue-50 text-blue-900 border border-blue-200 px-3 py-1.5 rounded-xl font-mono text-xs font-bold shadow-2xs">
                           📄 {stepItem.file}
                         </div>
-                        <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${activeStepIndex === stepItem.step ? 'rotate-90 text-emerald-400' : ''}`} />
+                        <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${activeStepIndex === stepItem.step ? 'rotate-90 text-emerald-600' : ''}`} />
                       </div>
                     </div>
 
                     {/* Downward Connection Arrow */}
                     {!isLast && (
-                      <div className="flex items-center justify-center py-0.5 text-slate-500">
-                        <ArrowDown className="w-4 h-4 text-emerald-500/70 animate-bounce" />
+                      <div className="flex items-center justify-center py-0.5 text-slate-400">
+                        <ArrowDown className="w-4 h-4 text-emerald-600 animate-bounce" />
                       </div>
                     )}
                   </div>
@@ -586,7 +587,7 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                 <div 
                   key={stepItem.step}
                   id={`step-${stepItem.step}`}
-                  className="bg-white border border-slate-200 rounded-2xl p-5 card-shadow space-y-3.5 transition-all hover:border-emerald-300"
+                  className="bg-white border border-slate-200 rounded-2xl p-5 card-shadow space-y-3.5 transition-all hover:border-emerald-300 hover:shadow-md"
                 >
                   {/* Step Header */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
@@ -612,32 +613,32 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
                     </div>
 
                     {/* Exact File Path Badge */}
-                    <div className="bg-blue-50 border border-blue-200 px-3 py-1 rounded-xl text-blue-900 font-mono text-xs font-bold">
+                    <div className="bg-blue-50 border border-blue-200 px-3 py-1 rounded-xl text-blue-900 font-mono text-xs font-bold shadow-2xs">
                       📄 {stepItem.file}
                     </div>
                   </div>
 
                   {/* Plain English Story */}
-                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80">
                     {stepItem.shortSummary}
                   </p>
 
                   {/* Input Source -> Output Target Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
                       <span className="font-bold text-slate-800 flex items-center gap-1.5">
                         <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
                         Inputs Received From:
                       </span>
-                      <span className="text-slate-600 font-mono text-[11px] block">{stepItem.inputFrom}</span>
+                      <span className="text-slate-700 font-mono text-[11px] font-medium block">{stepItem.inputFrom}</span>
                     </div>
 
-                    <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 space-y-1">
+                    <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 space-y-1">
                       <span className="font-bold text-emerald-950 flex items-center gap-1.5">
                         <ArrowRight className="w-3.5 h-3.5 text-emerald-600" />
                         Outputs Handed Over To:
                       </span>
-                      <span className="text-emerald-900 font-mono text-[11px] block">{stepItem.outputTo}</span>
+                      <span className="text-emerald-950 font-mono text-[11px] font-medium block">{stepItem.outputTo}</span>
                     </div>
                   </div>
                 </div>
