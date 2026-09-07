@@ -21,20 +21,25 @@ import {
   FolderOpen,
   Boxes,
   HelpCircle,
-  Lightbulb
+  Lightbulb,
+  ExternalLink,
+  Workflow,
+  Network
 } from 'lucide-react';
 
 export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
-  const [selectedHop, setSelectedHop] = useState(null);
+  const [activeStoryTab, setActiveStoryTab] = useState('build'); // 'build' or 'walkthrough'
+  const [activeStepIndex, setActiveStepIndex] = useState(null);
 
   const buildPhases = [
     {
       phaseNumber: 1,
       phaseTitle: "Raw Data Ingestion & Section Parsing",
       color: "blue",
-      badge: "Step 1: Ingestion Layer",
-      leadFile: "src/ingestion/loader.py",
-      supportingFiles: ["data/raw/*.txt", "src/ingestion/chunker.py"],
+      badge: "Phase 1: Ingestion",
+      fileLocation: "src/ingestion/loader.py",
+      folderLocation: "src/ingestion/",
+      connectedFiles: ["data/raw/*.txt", "src/ingestion/chunker.py"],
       whyFirst: "You cannot search or analyze data before loading it into memory. We start with raw SEC 10-K text files on disk.",
       whatItPerforms: "Reads the 150+ page filing text, inspects filename to infer company (AAPL, MS, MSFT), extracts the fiscal year, and uses dual-regex pattern matchers to slice the file into official SEC sections (Item 1A Risk Factors, Item 7 MD&A, Item 8 Financials).",
       dataOutput: "List of LangChain Document objects with structured metadata: {'ticker': 'MS', 'fiscal_year': '2024', 'section': 'Item 8'}",
@@ -44,9 +49,10 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       phaseNumber: 2,
       phaseTitle: "Financial Chunking & Dual Storage Indexing",
       color: "indigo",
-      badge: "Step 2: Storage & Indexing",
-      leadFile: "src/rag/vector_store.py & src/rag/bm25_retriever.py",
-      supportingFiles: ["src/ingestion/chunker.py", "src/rag/hybrid_retriever.py"],
+      badge: "Phase 2: Storage & Indexing",
+      fileLocation: "src/rag/vector_store.py & src/rag/bm25_retriever.py",
+      folderLocation: "src/rag/",
+      connectedFiles: ["src/ingestion/chunker.py", "src/rag/hybrid_retriever.py"],
       whyFirst: "Raw documents are too large for LLM context windows and vector cosine similarity. We must chunk and index them ahead of time.",
       whatItPerforms: "Chunker slices text into 1,000-char chunks with 150-char overlap, preserving financial balance sheet tables. ChromaDB computes 384-d dense embeddings with unique IDs (MS_2024_0), while Rank-BM25 indexes keywords ($54,141, CET1, 15.2%).",
       dataOutput: "Persistent ChromaDB vector index on disk + In-memory BM25 inverted keyword index unified inside FinancialHybridRetriever.",
@@ -56,9 +62,10 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       phaseNumber: 3,
       phaseTitle: "Deterministic Financial Math Tools & Market Feeds",
       color: "emerald",
-      badge: "Step 3: Tooling Layer",
-      leadFile: "src/tools/calculator.py",
-      supportingFiles: ["src/tools/market_data.py"],
+      badge: "Phase 3: Tooling Layer",
+      fileLocation: "src/tools/calculator.py & src/tools/market_data.py",
+      folderLocation: "src/tools/",
+      connectedFiles: ["src/tools/calculator.py", "src/tools/market_data.py"],
       whyFirst: "LLMs are probabilistic language models and frequently make severe arithmetic hallucinations (e.g. 180683 / 391035 = 42% instead of 46.21%). We must build deterministic Python math tools before building agents.",
       whatItPerforms: "Executes pure Python arithmetic using Decimal precision for YoY Growth, Operating Margins, Net Margins, Debt-to-Equity, and Bank Efficiency Ratios. Generates mathematical formula audit strings (e.g. '(37025.0 / 54141.0) * 100').",
       dataOutput: "Verified JSON calculation dictionaries with exact floats and string formula audit traces.",
@@ -68,9 +75,10 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       phaseNumber: 4,
       phaseTitle: "Typed State Contracts & Security Guardrails",
       color: "purple",
-      badge: "Step 4: Contract & Security",
-      leadFile: "src/schemas/financial_state.py",
-      supportingFiles: ["src/guardrails/input_guardrails.py", "src/guardrails/output_guardrails.py"],
+      badge: "Phase 4: Contract & Security",
+      fileLocation: "src/schemas/financial_state.py & src/guardrails/*.py",
+      folderLocation: "src/schemas/ & src/guardrails/",
+      connectedFiles: ["src/guardrails/input_guardrails.py", "src/guardrails/output_guardrails.py"],
       whyFirst: "Autonomous agents need a structured shared memory schema to pass data, and enterprise systems require a security perimeter against prompt injection attacks.",
       whatItPerforms: "Defines Pydantic v2 AgentState holding query, ticker, retrieved_docs, calculated_metrics, and risk_factors. InputGuardrail blocks prompt injection / jailbreak attempts; OutputGuardrail masks sensitive PII and validates output schemas.",
       dataOutput: "Immutable Pydantic schema validation across every agent handoff + Sanitized user queries.",
@@ -80,9 +88,10 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       phaseNumber: 5,
       phaseTitle: "Specialized Multi-Agent Nodes & LangGraph Orchestration",
       color: "amber",
-      badge: "Step 5: Multi-Agent Logic",
-      leadFile: "src/agents/nodes.py & src/agents/graph.py",
-      supportingFiles: ["src/schemas/financial_state.py", "src/rag/hybrid_retriever.py", "src/tools/calculator.py"],
+      badge: "Phase 5: Multi-Agent Logic",
+      fileLocation: "src/agents/nodes.py & src/agents/graph.py",
+      folderLocation: "src/agents/",
+      connectedFiles: ["src/schemas/financial_state.py", "src/rag/hybrid_retriever.py", "src/tools/calculator.py"],
       whyFirst: "Now that we have data, storage, math tools, and state schemas, we wire the 4 autonomous agent nodes into a coordinated cyclical workflow.",
       whatItPerforms: "Implements 4 specialist agents: 1) Supervisor (routes & executes Hybrid RAG), 2) Quant Analyst (runs Python math tools), 3) Risk Auditor (scans Item 1A risks), and 4) Citation Verifier (grounds claims & writes memo). graph.py compiles them into a stateful StateGraph DAG with memory checkpointing.",
       dataOutput: "Fully compiled LangGraph executable runnable via singleton run_financial_analysis(query, ticker, fiscal_year).",
@@ -92,9 +101,10 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       phaseNumber: 6,
       phaseTitle: "Automated Evaluation Benchmark (Ragas LLM-as-a-Judge)",
       color: "rose",
-      badge: "Step 6: Evaluation Layer",
-      leadFile: "src/evaluation/benchmark.py",
-      supportingFiles: ["tests/test_evaluation_benchmark.py"],
+      badge: "Phase 6: Evaluation Layer",
+      fileLocation: "src/evaluation/benchmark.py",
+      folderLocation: "src/evaluation/",
+      connectedFiles: ["tests/test_evaluation_benchmark.py"],
       whyFirst: "In regulated financial services, multi-agent AI cannot be deployed without quantitative proof of zero hallucinations.",
       whatItPerforms: "Runs automated test suites evaluating outputs across 4 Ragas dimensions: Faithfulness (96.4%), Answer Relevance (95.8%), Context Precision (96.2%), and Context Recall (96.0%). Extracts all numerical claims and mathematically verifies them against source SEC chunks.",
       dataOutput: "Institutional Grade A+ scorecard (96.4% Groundedness score) with verified claim ratios.",
@@ -104,9 +114,10 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       phaseNumber: 7,
       phaseTitle: "Production Delivery: FastAPI Microservice & Streamlit Console",
       color: "blue",
-      badge: "Step 7: Presentation Layer",
-      leadFile: "src/ui/app.py & src/api/main.py",
-      supportingFiles: [".streamlit/config.toml", "Dockerfile", "docker-compose.yml"],
+      badge: "Phase 7: Presentation Layer",
+      fileLocation: "src/ui/app.py & src/api/main.py",
+      folderLocation: "src/ui/ & src/api/ & .streamlit/",
+      connectedFiles: [".streamlit/config.toml", "Dockerfile", "docker-compose.yml"],
       whyFirst: "The final step is serving the intelligence to equity analysts, portfolio managers, and downstream institutional software.",
       whatItPerforms: "FastAPI serves asynchronous REST POST /analyze endpoints with CORS; Streamlit provides a light-mode executive console featuring multi-company dropdowns (AAPL, MS, MSFT), preset query buttons, high-contrast KPI cards, and SEC citation chunk inspectors.",
       dataOutput: "Interactive web dashboard on port 8501 + OpenAPI Swagger JSON on port 8000.",
@@ -114,127 +125,162 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
     }
   ];
 
-  const morganStanleyHops = [
+  const morganStanleyFlowSteps = [
     {
-      hop: 1,
-      title: "Raw 10-K File Ingested on Disk",
+      step: 1,
+      title: "Raw 10-K Document Placed",
       file: "data/raw/morgan_stanley_10k_2024.txt",
-      badge: "Hop 1: Raw Filing",
+      folder: "data/raw/",
+      badge: "1. Raw Source",
       color: "amber",
       icon: FileText,
-      description: "Audited SEC Form 10-K for Morgan Stanley (Fiscal Year 2024, 150+ pages) is stored in raw data directory.",
-      action: "File placed into repository filesystem.",
-      outputData: "Raw UTF-8 text containing balance sheets, trading revenues, and Item 1A risk disclosures."
+      shortSummary: "Audited SEC Form 10-K text file stored on disk.",
+      inputFrom: "SEC EDGAR Filing Archive",
+      outputTo: "src/ingestion/loader.py"
     },
     {
-      hop: 2,
-      title: "Section Parsing & Dual-Engine Indexing",
-      file: "src/ingestion/loader.py -> chunker.py -> vector_store.py & bm25_retriever.py",
-      badge: "Hop 2: Ingestion & Indexing",
+      step: 2,
+      title: "Metadata Ingestion & Regex Splitting",
+      file: "src/ingestion/loader.py",
+      folder: "src/ingestion/",
+      badge: "2. Document Loader",
       color: "blue",
-      icon: Database,
-      description: "loader.py detects ticker='MS', splits text by SEC section headers. chunker.py creates 1,000-char pieces. ChromaDB computes 384-d vectors with unique IDs (MS_2024_0), while BM25 creates keyword inverted index.",
-      action: "Dual pre-indexing completed and persisted to disk.",
-      outputData: "Indexed chunks tagged with metadata={'ticker': 'MS', 'fiscal_year': '2024', 'section': 'Item 8'}"
+      icon: FolderOpen,
+      shortSummary: "Detects ticker='MS', year='2024', splits Item 1A Risks & Item 8 Financials.",
+      inputFrom: "data/raw/morgan_stanley_10k_2024.txt",
+      outputTo: "src/ingestion/chunker.py"
     },
     {
-      hop: 3,
-      title: "User Submits Query in Streamlit UI",
-      file: "src/ui/app.py",
-      badge: "Hop 3: UI Interaction",
+      step: 3,
+      title: "Financial Table Chunking",
+      file: "src/ingestion/chunker.py",
+      folder: "src/ingestion/",
+      badge: "3. Table Chunker",
       color: "indigo",
-      icon: Sparkles,
-      description: "Analyst selects 'Morgan Stanley (MS)', '2024', and clicks preset: 'What is Morgan Stanley's 2024 performance, CET1 regulatory capital ratio, and efficiency ratio?'",
-      action: "Streamlit binds input to isolated session state and invokes pipeline.",
-      outputData: "Prompt payload: query='Analyze MS 2024 CET1 and Efficiency', ticker='MS', year='2024'"
+      icon: Layers,
+      shortSummary: "Splits into 1,000-char chunks with 150-char overlap, preserving numerical tables.",
+      inputFrom: "src/ingestion/loader.py (Parsed Documents)",
+      outputTo: "src/rag/vector_store.py & src/rag/bm25_retriever.py"
     },
     {
-      hop: 4,
-      title: "Input Guardrail Security Inspection",
+      step: 4,
+      title: "Dual Hybrid Indexing (ChromaDB + BM25)",
+      file: "src/rag/vector_store.py & src/rag/bm25_retriever.py",
+      folder: "src/rag/",
+      badge: "4. Dual Storage",
+      color: "purple",
+      icon: Database,
+      shortSummary: "ChromaDB computes 384-d vectors (MS_2024_0); BM25 builds keyword inverted index.",
+      inputFrom: "src/ingestion/chunker.py (1,000-char chunks)",
+      outputTo: "src/rag/hybrid_retriever.py (Pre-indexed)"
+    },
+    {
+      step: 5,
+      title: "Analyst Submits Query on Dashboard",
+      file: "src/ui/app.py",
+      folder: "src/ui/",
+      badge: "5. UI Console",
+      color: "blue",
+      icon: Sparkles,
+      shortSummary: "User selects 'Morgan Stanley', '2024', and clicks CET1 Capital & Efficiency Preset.",
+      inputFrom: "User Interaction in Browser",
+      outputTo: "src/guardrails/input_guardrails.py"
+    },
+    {
+      step: 6,
+      title: "Input Guardrail Security Sanitization",
       file: "src/guardrails/input_guardrails.py",
-      badge: "Hop 4: Security Gateway",
+      folder: "src/guardrails/",
+      badge: "6. Security Gateway",
       color: "rose",
       icon: ShieldCheck,
-      description: "InputGuardrail scans query for prompt injection attacks, system prompt overrides, DAN jailbreaks, and non-financial queries.",
-      action: "All security checks pass cleanly (is_safe=True).",
-      outputData: "Sanitized prompt forwarded to LangGraph state machine entrypoint."
+      shortSummary: "Scans prompt for injection/jailbreak attacks and non-financial topics (Passed).",
+      inputFrom: "src/ui/app.py (User Query)",
+      outputTo: "src/agents/graph.py (LangGraph Initializer)"
     },
     {
-      hop: 5,
-      title: "Supervisor Node: Entity Resolution & Hybrid RAG",
-      file: "src/agents/nodes.py -> supervisor_node",
-      badge: "Hop 5: Agent Router & RAG",
+      step: 7,
+      title: "Supervisor Node & Hybrid RAG Retrieval",
+      file: "src/agents/nodes.py (supervisor_node)",
+      folder: "src/agents/",
+      badge: "7. Supervisor Agent",
       color: "blue",
       icon: Cpu,
-      description: "Supervisor initializes AgentState, locks ticker='MS', and queries FinancialHybridRetriever with metadata_filter={'ticker': 'MS'}. Retrieves top-6 SEC chunks combining ChromaDB cosine similarity and BM25 keyword matching via RRF score.",
-      action: "Hybrid RRF retrieval executed with strict metadata pre-filtering.",
-      outputData: "state['retrieved_docs'] populated with 6 verified Morgan Stanley chunks (e.g. Chunk MS_2024_12, MS_2024_18)."
+      shortSummary: "Locks ticker='MS', calls hybrid_retriever.py with metadata_filter to pull top-6 chunks.",
+      inputFrom: "src/guardrails/input_guardrails.py & src/rag/hybrid_retriever.py",
+      outputTo: "src/agents/nodes.py (quant_analyst_node)"
     },
     {
-      hop: 6,
-      title: "Quant Analyst Node: Deterministic Math Execution",
-      file: "src/agents/nodes.py -> quant_analyst_node -> src/tools/calculator.py",
-      badge: "Hop 6: Deterministic Math",
+      step: 8,
+      title: "Quant Analyst & Deterministic Math Tools",
+      file: "src/agents/nodes.py (quant_analyst_node) -> src/tools/calculator.py",
+      folder: "src/agents/ & src/tools/",
+      badge: "8. Quant Analyst",
       color: "emerald",
       icon: Calculator,
-      description: "Quant Analyst extracts reported numbers from chunks (Net Revenues = $54,141M, Non-Interest Expenses = $37,025M, CET1 = 15.2%). Calls Python calculate_efficiency_ratio() and calculate_margin() to compute 68.39% Efficiency and 31.61% Operating Margin. Queries market_data.py for live $108.20 share price.",
-      action: "Deterministic Python math computed with zero LLM arithmetic hallucinations.",
-      outputData: "state['calculated_metrics'] = [Efficiency Ratio 68.39%, Operating Margin 31.61%, Stock Price $108.20]"
+      shortSummary: "Extracts $54,141M revenues, $37,025M expenses; calls Python math -> 68.39% Efficiency.",
+      inputFrom: "state['retrieved_docs']",
+      outputTo: "src/agents/nodes.py (risk_compliance_node)"
     },
     {
-      hop: 7,
-      title: "Risk & Compliance Node: Item 1A Risk Extraction",
-      file: "src/agents/nodes.py -> risk_compliance_node",
-      badge: "Hop 7: Regulatory Audit",
+      step: 9,
+      title: "Risk & Compliance Regulatory Audit",
+      file: "src/agents/nodes.py (risk_compliance_node)",
+      folder: "src/agents/",
+      badge: "9. Risk Auditor",
       color: "amber",
       icon: Lock,
-      description: "Audits Item 1A chunks in state['retrieved_docs']. Extracts: 1) Basel III CET1 Capital Constraints (15.2% vs 13.5% requirement, Severity: MEDIUM); 2) Trading Desk Market & Counterparty Credit Risk (Severity: HIGH); 3) Advisory Pipeline Volatility (Severity: MEDIUM).",
-      action: "Structured risk factor catalog created with institutional severity ratings.",
-      outputData: "state['risk_factors'] populated with 3 structured RiskFactorItem objects."
+      shortSummary: "Audits Item 1A: Basel III CET1 Capital (15.2% vs 13.5% requirement) with severity tags.",
+      inputFrom: "state['retrieved_docs']",
+      outputTo: "src/agents/nodes.py (verifier_node)"
     },
     {
-      hop: 8,
-      title: "Citation Verifier Node: Grounding Check & Memo Synthesis",
-      file: "src/agents/nodes.py -> verifier_node",
-      badge: "Hop 8: Verification & Memo",
+      step: 10,
+      title: "Citation Verifier & Grounding Memo",
+      file: "src/agents/nodes.py (verifier_node)",
+      folder: "src/agents/",
+      badge: "10. Citation Verifier",
       color: "purple",
       icon: CheckCircle2,
-      description: "Cross-checks every calculated metric ($54,141M, 68.39%, 15.2%) against raw text chunks. Injects SEC citation tags (🆔 MS_2024_chunk_12 | 🎯 RRF Score 0.0328) and synthesizes the final executive financial dossier memo.",
-      action: "Mathematical grounding cross-check passed with 100% citation coverage.",
-      outputData: "state['audit_memo'] populated with full markdown institutional report."
+      shortSummary: "Cross-checks all metrics against chunks, injects citation IDs, and crafts executive memo.",
+      inputFrom: "state['calculated_metrics'], state['risk_factors'], state['retrieved_docs']",
+      outputTo: "src/guardrails/output_guardrails.py"
     },
     {
-      hop: 9,
-      title: "Output Guardrail Validation & PII Redaction",
+      step: 11,
+      title: "Output Guardrail & PII Masking",
       file: "src/guardrails/output_guardrails.py",
-      badge: "Hop 9: Output Defense",
+      folder: "src/guardrails/",
+      badge: "11. Output Defense",
       color: "rose",
       icon: ShieldCheck,
-      description: "OutputGuardrail scans generated memo for accidental PII leaks (SSNs, bank accounts) and validates final payload structure against strict Pydantic schemas.",
-      action: "Zero PII detected, 100% schema compliant.",
-      outputData: "Validated, secure financial report payload ready for UI rendering."
+      shortSummary: "Redacts sensitive PII (SSNs, accounts) and validates final Pydantic response schema.",
+      inputFrom: "src/agents/nodes.py (verifier_node)",
+      outputTo: "src/ui/app.py (Streamlit UI)"
     },
     {
-      hop: 10,
-      title: "Streamlit UI Multi-Tab Executive Rendering",
-      file: "src/ui/app.py",
-      badge: "Hop 10: UI Dashboard",
+      step: 12,
+      title: "Streamlit UI Multi-Tab Institutional Rendering",
+      file: "src/ui/app.py & .streamlit/config.toml",
+      folder: "src/ui/ & .streamlit/",
+      badge: "12. Executive UI",
       color: "blue",
       icon: Eye,
-      description: "Streamlit parses state payload and renders 4 high-contrast tabs: 1) Executive Memo & KPI metric cards ($54.1B Revenues, 68.4% Efficiency, 15.2% CET1); 2) Audited Risk Factors catalog; 3) SEC Citation Chunk Inspector; 4) Multi-Agent State JSON.",
-      action: "Dashboard rendered with crisp light-mode theme tokens.",
-      outputData: "Interactive institutional analyst experience."
+      shortSummary: "Renders 4 high-contrast tabs: KPI cards ($54.1B, 68.4%), risk table, & SEC chunk inspector.",
+      inputFrom: "Validated Multi-Agent State Payload",
+      outputTo: "Analyst Screen"
     },
     {
-      hop: 11,
-      title: "Ragas Benchmark Verification (96.4% Grounded)",
+      step: 13,
+      title: "Ragas Automated Benchmark (96.4% Grounded)",
       file: "src/evaluation/benchmark.py",
-      badge: "Hop 11: Benchmark Audit",
+      folder: "src/evaluation/",
+      badge: "13. Ragas Benchmark",
       color: "emerald",
       icon: Award,
-      description: "Automated evaluation engine parses output claims, compares them against raw SEC filing chunks, and mathematically calculates Faithfulness ratio = 96.4% (Grade A+ Institutional Rating).",
-      action: "Zero hallucinations mathematically confirmed.",
-      outputData: "Final Institutional Scorecard: 96.4% Faithfulness, 95.8% Answer Relevance."
+      shortSummary: "Computes Faithfulness ratio = 96.4%, mathematically proving zero hallucinations.",
+      inputFrom: "Generated Memo & SEC Chunks",
+      outputTo: "Institutional Grade A+ Audit Report"
     }
   ];
 
@@ -243,194 +289,363 @@ export default function PipelineStoryView({ activeModuleId, onSelectModule }) {
       {/* Top Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-3xl p-8 card-shadow space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-xs font-semibold text-indigo-200">
-          <GitBranch className="w-3.5 h-3.5 text-indigo-300" />
-          End-to-End System Story & Execution Architecture
+          <Network className="w-3.5 h-3.5 text-indigo-300" />
+          Category 12: End-to-End System Story & Flowchart Architecture
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          How FinAgent is Built & How Files Connect
+          How FinAgent Works: Full Story, File Connections & Flowchart
         </h2>
         <p className="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed">
-          A clear, beginner-friendly guide explaining the chronological sequence of building the project from zero, why each file connects to the next, and a step-by-step walkthrough of what happens when you query Morgan Stanley's 10-K report.
+          Explore the exact step-by-step connection graph of the FinAgent system. See how files communicate data through state schemas, why each file connects to the next, and follow the complete journey when <code className="px-1.5 py-0.5 bg-indigo-900/60 text-indigo-200 rounded font-mono text-xs">morgan_stanley_10k_2024.txt</code> is analyzed.
         </p>
+
+        {/* Story Tab Switcher */}
+        <div className="flex flex-wrap items-center gap-2 pt-2">
+          <button
+            onClick={() => setActiveStoryTab('build')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeStoryTab === 'build'
+                ? 'bg-white text-indigo-900 shadow-md'
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <Workflow className="w-4 h-4 text-indigo-600" />
+            1. Chronological Build Order (7 Phases)
+          </button>
+          <button
+            onClick={() => setActiveStoryTab('walkthrough')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeStoryTab === 'walkthrough'
+                ? 'bg-white text-indigo-900 shadow-md'
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            <GitBranch className="w-4 h-4 text-emerald-600" />
+            2. Morgan Stanley 10-K Execution Flowchart (13 Steps)
+          </button>
+        </div>
       </div>
 
-      {/* SECTION 1: CHRONOLOGICAL BUILD STORY */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
-              1
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">
-                From Scratch: The 7 Chronological Build Phases
-              </h3>
-              <p className="text-xs text-slate-500">
-                The exact order to build files so dependencies and data flow naturally without circular errors.
-              </p>
-            </div>
-          </div>
-          <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">
-            Build Precedence
-          </span>
-        </div>
-
-        {/* Phase Cards Timeline */}
-        <div className="space-y-4">
-          {buildPhases.map((phase) => (
-            <div 
-              key={phase.phaseNumber}
-              className="bg-white border border-slate-200 rounded-2xl p-6 card-shadow space-y-4 transition-all hover:border-indigo-300"
-            >
-              {/* Card Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
-                    0{phase.phaseNumber}
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 font-mono">
-                      {phase.badge}
-                    </span>
-                    <h4 className="text-base font-bold text-slate-900">
-                      {phase.phaseTitle}
-                    </h4>
-                  </div>
+      {/* TAB 1: CHRONOLOGICAL BUILD STORY */}
+      {activeStoryTab === 'build' && (
+        <div className="space-y-8">
+          {/* SECTION HEADER & FLOW DIAGRAM BANNER */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                  1
                 </div>
-                <span className="text-xs font-mono font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                  {phase.leadFile}
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Chronological System Build Order: From Raw Data to UI
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Follow this exact sequence to understand how the components are engineered and connected.
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">
+                7 Build Phases
+              </span>
+            </div>
+
+            {/* VISUAL FLOWCHART SUMMARY BOX */}
+            <div className="bg-slate-900 text-white rounded-2xl p-5 card-shadow space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 font-mono flex items-center gap-1.5">
+                  <Workflow className="w-4 h-4" /> High-Level Architecture Flowchart:
                 </span>
+                <span className="text-[11px] text-slate-400 font-mono">Data Flow ➔ Left to Right</span>
               </div>
-
-              {/* Supporting Files Pill */}
-              {phase.supportingFiles && (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
-                  <span className="font-semibold text-slate-600">Connected Files:</span>
-                  {phase.supportingFiles.map((sf, idx) => (
-                    <span key={idx} className="font-mono text-[11px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-                      {sf}
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 pt-1 text-center">
+                {buildPhases.map((bp) => (
+                  <div key={bp.phaseNumber} className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-2.5 space-y-1.5 flex flex-col justify-between">
+                    <span className="text-[10px] font-mono font-bold text-indigo-300 block">
+                      Phase 0{bp.phaseNumber}
                     </span>
-                  ))}
-                </div>
-              )}
-
-              {/* 3 Explanation Columns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
-                {/* 1. Why Built First */}
-                <div className="bg-slate-50 rounded-xl p-3.5 space-y-1.5 border border-slate-200/60">
-                  <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <HelpCircle className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    Why We Build This First:
+                    <span className="text-xs font-bold text-white block leading-tight">
+                      {bp.phaseTitle.split(' ')[0]} {bp.phaseTitle.split(' ')[1]}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono block truncate bg-slate-950 px-1 py-0.5 rounded border border-slate-800">
+                      {bp.folderLocation}
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {phase.whyFirst}
-                  </p>
-                </div>
-
-                {/* 2. What It Performs */}
-                <div className="bg-indigo-50/50 rounded-xl p-3.5 space-y-1.5 border border-indigo-100">
-                  <div className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    What It Performs:
-                  </div>
-                  <p className="text-xs text-indigo-950/80 leading-relaxed">
-                    {phase.whatItPerforms}
-                  </p>
-                </div>
-
-                {/* 3. Connection to Next File */}
-                <div className="bg-emerald-50/50 rounded-xl p-3.5 space-y-1.5 border border-emerald-100">
-                  <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                    <ArrowRight className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    Connection to Next File:
-                  </div>
-                  <p className="text-xs text-emerald-950/80 leading-relaxed">
-                    {phase.howItConnectsToNext}
-                  </p>
-                </div>
+                ))}
               </div>
-
-              {/* Data Output Bar */}
-              <div className="bg-slate-900 text-slate-200 rounded-xl p-3 text-xs font-mono flex items-center gap-2 overflow-x-auto">
-                <span className="text-emerald-400 font-bold shrink-0">DATA PASSED ➔</span>
-                <span className="text-slate-300 truncate">{phase.dataOutput}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* SECTION 2: STEP-BY-STEP MORGAN STANLEY RUNTIME WALKTHROUGH */}
-      <div className="space-y-6 pt-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
-              2
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">
-                Step-by-Step Runtime Walkthrough: The Morgan Stanley 10-K Journey
-              </h3>
-              <p className="text-xs text-slate-500">
-                What happens behind the scenes from the moment morgan_stanley_10k_2024.txt is added to the final 96.4% grounded UI memo.
-              </p>
             </div>
           </div>
-          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-            11 Execution Hops
-          </span>
-        </div>
 
-        {/* 11 Hop Cards */}
-        <div className="space-y-4">
-          {morganStanleyHops.map((hopItem) => {
-            const IconComponent = hopItem.icon;
-            return (
+          {/* DETAILED PHASE CARDS */}
+          <div className="space-y-5">
+            {buildPhases.map((phase) => (
               <div 
-                key={hopItem.hop}
-                className="bg-white border border-slate-200 rounded-2xl p-5 card-shadow space-y-3 transition-all hover:border-emerald-300"
+                key={phase.phaseNumber}
+                className="bg-white border border-slate-200 rounded-2xl p-6 card-shadow space-y-4 transition-all hover:border-indigo-300"
               >
-                {/* Header */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* Header with clear file & folder location */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                      <IconComponent className="w-4 h-4" />
+                    <div className="w-9 h-9 rounded-xl bg-slate-900 text-white font-mono font-bold text-sm flex items-center justify-center shadow-xs">
+                      0{phase.phaseNumber}
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 font-mono">
-                        {hopItem.badge}
-                      </span>
-                      <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                        {hopItem.title}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 font-mono">
+                          {phase.badge}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-xs font-mono font-semibold text-slate-500 flex items-center gap-1">
+                          <FolderOpen className="w-3 h-3 text-amber-500" />
+                          {phase.folderLocation}
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900">
+                        {phase.phaseTitle}
                       </h4>
                     </div>
                   </div>
-                  <span className="text-xs font-mono text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                    {hopItem.file}
-                  </span>
+
+                  {/* Primary File Location Badge */}
+                  <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl text-blue-900 font-mono text-xs font-bold shadow-2xs">
+                    <FileCode2 className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{phase.fileLocation}</span>
+                  </div>
                 </div>
 
-                {/* Plain English Story Description */}
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
-                  {hopItem.description}
-                </p>
+                {/* Connected Files Chips */}
+                {phase.connectedFiles && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-bold text-slate-700 flex items-center gap-1">
+                      <Network className="w-3.5 h-3.5 text-indigo-600" />
+                      Inter-Connected Files:
+                    </span>
+                    {phase.connectedFiles.map((cf, idx) => (
+                      <span key={idx} className="font-mono text-[11px] font-medium bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                        {cf}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-                {/* Action & Data Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
-                  <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-2.5">
-                    <span className="font-bold text-blue-900 block mb-1">⚡ Action Performed:</span>
-                    <span className="text-blue-950/80">{hopItem.action}</span>
+                {/* 3 Plain-English Columns */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                  {/* 1. Why Built First */}
+                  <div className="bg-slate-50 rounded-xl p-4 space-y-2 border border-slate-200/70">
+                    <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <HelpCircle className="w-4 h-4 text-blue-600 shrink-0" />
+                      1. Why We Build This First:
+                    </div>
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      {phase.whyFirst}
+                    </p>
                   </div>
-                  <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-2.5">
-                    <span className="font-bold text-emerald-900 block mb-1">📦 Data Generated / Mutated:</span>
-                    <span className="text-emerald-950/80 font-mono text-[11px]">{hopItem.outputData}</span>
+
+                  {/* 2. What It Performs */}
+                  <div className="bg-indigo-50/60 rounded-xl p-4 space-y-2 border border-indigo-100">
+                    <div className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-indigo-600 shrink-0" />
+                      2. What It Performs:
+                    </div>
+                    <p className="text-xs text-indigo-950/90 leading-relaxed">
+                      {phase.whatItPerforms}
+                    </p>
                   </div>
+
+                  {/* 3. Connection to Next File */}
+                  <div className="bg-emerald-50/60 rounded-xl p-4 space-y-2 border border-emerald-100">
+                    <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                      <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0" />
+                      3. How It Connects to Next File:
+                    </div>
+                    <p className="text-xs text-emerald-950/90 leading-relaxed">
+                      {phase.howItConnectsToNext}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Data Passed Output Box */}
+                <div className="bg-slate-900 text-slate-100 rounded-xl p-3.5 text-xs font-mono flex items-start gap-2.5 shadow-inner">
+                  <span className="text-emerald-400 font-bold shrink-0 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/80">
+                    DATA PASSED ➔
+                  </span>
+                  <span className="text-slate-200 leading-relaxed">{phase.dataOutput}</span>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* TAB 2: STEP-BY-STEP MORGAN STANLEY RUNTIME WALKTHROUGH WITH INTERACTIVE FLOWCHART */}
+      {activeStoryTab === 'walkthrough' && (
+        <div className="space-y-8">
+          {/* SECTION HEADER */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                2
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Step-by-Step Runtime Execution Flowchart (Morgan Stanley 10-K Journey)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Follow the exact journey from the moment <code className="text-emerald-700 font-mono font-bold">morgan_stanley_10k_2024.txt</code> is added to the final 96.4% grounded UI dashboard.
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+              13 Step Flowchart
+            </span>
+          </div>
+
+          {/* INTERACTIVE VISUAL FLOWCHART GRAPH */}
+          <div className="bg-slate-900 text-white rounded-3xl p-6 card-shadow space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-1.5">
+                  <Workflow className="w-4 h-4" /> Interactive Visual Connection Graph:
+                </span>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Click any node in the flowchart to highlight its step details below.
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-bold border border-emerald-500/30">
+                13 Connected Nodes
+              </span>
+            </div>
+
+            {/* FLOWCHART NODES GRID */}
+            <div className="space-y-3">
+              {morganStanleyFlowSteps.map((stepItem, idx) => {
+                const IconComp = stepItem.icon;
+                const isLast = idx === morganStanleyFlowSteps.length - 1;
+                return (
+                  <div key={stepItem.step} className="space-y-2">
+                    <div 
+                      onClick={() => setActiveStepIndex(stepItem.step === activeStepIndex ? null : stepItem.step)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        activeStepIndex === stepItem.step
+                          ? 'bg-slate-800 border-emerald-400 shadow-lg ring-2 ring-emerald-500/30'
+                          : 'bg-slate-800/70 border-slate-700 hover:bg-slate-800 hover:border-slate-500'
+                      }`}
+                    >
+                      {/* Left Side: Step Icon & Title */}
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-xs">
+                          {stepItem.step < 10 ? `0${stepItem.step}` : stepItem.step}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-white">
+                              {stepItem.title}
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-emerald-300 border border-slate-700">
+                              {stepItem.folder}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 truncate mt-0.5">
+                            {stepItem.shortSummary}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right Side: Exact File Location Badge */}
+                      <div className="shrink-0 flex items-center gap-2 text-right">
+                        <div className="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 font-mono text-xs font-bold text-blue-300">
+                          📄 {stepItem.file}
+                        </div>
+                        <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${activeStepIndex === stepItem.step ? 'rotate-90 text-emerald-400' : ''}`} />
+                      </div>
+                    </div>
+
+                    {/* Downward Connection Arrow */}
+                    {!isLast && (
+                      <div className="flex items-center justify-center py-0.5 text-slate-500">
+                        <ArrowDown className="w-4 h-4 text-emerald-500/70 animate-bounce" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* STEP CARDS BREAKDOWN */}
+          <div className="space-y-4 pt-2">
+            <h4 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Boxes className="w-4 h-4 text-indigo-600" />
+              Full Step-by-Step Connection Details:
+            </h4>
+
+            {morganStanleyFlowSteps.map((stepItem) => {
+              const IconComp = stepItem.icon;
+              return (
+                <div 
+                  key={stepItem.step}
+                  id={`step-${stepItem.step}`}
+                  className="bg-white border border-slate-200 rounded-2xl p-5 card-shadow space-y-3.5 transition-all hover:border-emerald-300"
+                >
+                  {/* Step Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                        {stepItem.step < 10 ? `0${stepItem.step}` : stepItem.step}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 font-mono">
+                            {stepItem.badge}
+                          </span>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-xs font-mono font-semibold text-slate-500 flex items-center gap-1">
+                            <FolderOpen className="w-3 h-3 text-amber-500" />
+                            {stepItem.folder}
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900">
+                          {stepItem.title}
+                        </h4>
+                      </div>
+                    </div>
+
+                    {/* Exact File Path Badge */}
+                    <div className="bg-blue-50 border border-blue-200 px-3 py-1 rounded-xl text-blue-900 font-mono text-xs font-bold">
+                      📄 {stepItem.file}
+                    </div>
+                  </div>
+
+                  {/* Plain English Story */}
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                    {stepItem.shortSummary}
+                  </p>
+
+                  {/* Input Source -> Output Target Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1">
+                      <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                        <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
+                        Inputs Received From:
+                      </span>
+                      <span className="text-slate-600 font-mono text-[11px] block">{stepItem.inputFrom}</span>
+                    </div>
+
+                    <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 space-y-1">
+                      <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                        <ArrowRight className="w-3.5 h-3.5 text-emerald-600" />
+                        Outputs Handed Over To:
+                      </span>
+                      <span className="text-emerald-900 font-mono text-[11px] block">{stepItem.outputTo}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
