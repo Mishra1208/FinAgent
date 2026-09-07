@@ -1878,215 +1878,53 @@ export const PROJECT_MODULES = [
     ]
   },
   {
-    "id": "pipeline-build-story",
+    "id": "pipeline-system-story",
     "category": "12. End-to-End System Story & Pipeline Architecture",
-    "badge": "Architecture Story",
-    "badgeColor": "indigo",
-    "title": "From Scratch: Chronological Project Build Order & File Dependencies",
-    "path": "data/raw/ -> src/ingestion/ -> src/rag/ -> src/tools/ -> src/schemas/ -> src/guardrails/ -> src/agents/ -> src/eval/ -> src/ui/",
-    "summary": "This master guide explains the full chronological story of how FinAgent is built from the ground up. It answers the fundamental engineering questions: Where do we start? Which file is built first, second, and third? How is each file connected to the next? Why does file B depend on file A? How do the files communicate data through state contracts? Follow this blueprint to understand the entire architecture from zero to production.",
-    "keyConcepts": [
-      "Chronological System Construction Order",
-      "Data Pipeline Precedence (Ingestion -> Storage -> Logic -> Interface)",
-      "Inter-Module Communication via Typed State (AgentState)",
-      "Dependency Graph & Import Hierarchy",
-      "Decoupled Service Architecture (RAG vs Math vs Agents)",
-      "Zero Floating-Point Drift Data Flow"
-    ],
-    "interviewQuestions": [
-      {
-        "question": "If you had to build FinAgent from scratch today, in what exact sequence would you build the files and why?",
-        "answer": "We build in 7 chronological phases: 1) Data Layer (loader.py & chunker.py) to parse SEC 10-Ks and create structured Document objects; 2) Storage Layer (vector_store.py & bm25_retriever.py -> hybrid_retriever.py) to index chunks for dense/sparse RRF search; 3) Tooling Layer (calculator.py & market_data.py) for pure deterministic Python math; 4) Contract Layer (financial_state.py & guardrails) to define Pydantic schemas and security filters; 5) Multi-Agent Orchestration (nodes.py & graph.py) to wire the 4 specialized agents into a stateful LangGraph cyclical DAG; 6) Evaluation Layer (benchmark.py) for Ragas Groundedness testing; and 7) Presentation Layer (main.py & app.py) for FastAPI REST and Streamlit UI."
-      },
-      {
-        "question": "How do files in FinAgent communicate with each other? Do they call each other directly?",
-        "answer": "Agents do NOT call each other directly. Instead, they communicate through a shared, immutable Pydantic state dictionary (AgentState defined in src/schemas/financial_state.py). Each agent node in nodes.py receives the current state, reads the fields it needs (e.g. retrieved_docs or calculated_metrics), performs its specialized task, and returns a dictionary of updated fields. LangGraph merges these updates into the central state and passes it to the next node in the graph. This eliminates tight coupling and makes the pipeline 100% modular and testable."
-      }
-    ],
-    "sections": [
-      {
-        "sectionId": "story-sec-1",
-        "startLine": 1,
-        "endLine": 35,
-        "title": "Phase 1 & 2: Raw Data Ingestion & Dual Hybrid Retrieval Storage",
-        "code": "# STEP 1: Put raw 10-K text files into data/raw/\n# Files: data/raw/apple_10k_2024.txt, data/raw/morgan_stanley_10k_2024.txt, data/raw/microsoft_10k_2024.txt\n\n# STEP 2: Build src/ingestion/loader.py\n# Reads raw text, detects company/ticker (AAPL, MS, MSFT), and uses regex to split into SEC Items.\nfrom src.ingestion.loader import SECDocumentLoader\nloader = SECDocumentLoader(\"data/raw/morgan_stanley_10k_2024.txt\")\nraw_docs = loader.load()  # List of LangChain Document objects with metadata={\"ticker\": \"MS\", \"year\": \"2024\"}\n\n# STEP 3: Build src/ingestion/chunker.py\n# Slices large 10-K sections into 1,000-character chunks with 150-char overlap, preserving financial tables.\nfrom src.ingestion.chunker import FinancialChunker\nchunker = FinancialChunker(chunk_size=1000, chunk_overlap=150)\nchunks = chunker.chunk_documents(raw_docs)\n\n# STEP 4: Build Storage Engines (src/rag/vector_store.py & src/rag/bm25_retriever.py)\n# 4A. ChromaDB stores 384-dimensional dense semantic vectors with unique IDs (MS_2024_0, MS_2024_1)\nfrom src.rag.vector_store import FinancialVectorStore\nvector_store = FinancialVectorStore(\"data/vector_store/chroma\")\nvector_store.add_documents(chunks)\n\n# 4B. BM25 stores sparse keyword frequencies with financial regex tokenization (preserving $, %, .)\nfrom src.rag.bm25_retriever import FinancialBM25Retriever\nbm25 = FinancialBM25Retriever()\nbm25.index_documents(chunks)\n\n# STEP 5: Build src/rag/hybrid_retriever.py\n# Fuses dense ChromaDB and sparse BM25 using Reciprocal Rank Fusion: RRF Score = 1 / (60 + rank)\nfrom src.rag.hybrid_retriever import FinancialHybridRetriever\nretriever = FinancialHybridRetriever(vector_store=vector_store, bm25_retriever=bm25)",
-        "lineByLine": [
-          "Line 2: `data/raw/*.txt` - The foundational starting point holding raw audited 10-K filings.",
-          "Line 6: `src/ingestion/loader.py` - First Python file created; converts raw text files into LangChain `Document` objects with ticker/year metadata.",
-          "Line 12: `src/ingestion/chunker.py` - Second Python file; chunks long documents into 1,000-char pieces while preserving financial table alignments.",
-          "Line 18: `src/rag/vector_store.py` - Third file; embeds chunks using `all-MiniLM-L6-v2` and persists 384-d vectors to ChromaDB with deduplicated IDs (`MS_2024_0`).",
-          "Line 24: `src/rag/bm25_retriever.py` - Fourth file; builds an in-memory sparse keyword inverted index with financial tokenizer.",
-          "Line 30: `src/rag/hybrid_retriever.py` - Fifth file; combines vector search and BM25 search via Reciprocal Rank Fusion ($RRF = \frac{1}{60 + rank}$)."
-        ],
-        "beginnerConcepts": [
-          {
-            "term": "Bottom-Up Pipeline Construction",
-            "explanation": "Starting from the raw data layer first, then building storage, then tools, and finally connecting agents. You cannot build an agent before you have data for it to search."
-          },
-          {
-            "term": "Loose Coupling via Abstraction",
-            "explanation": "Because `loader.py` produces standard `Document` objects, `chunker.py` and `vector_store.py` don't care how the text was read\u2014they just process standard documents."
-          }
-        ],
-        "simpleExplanation": "We start with the raw text files. We write `loader.py` to read them and tag them with company names. Next, we write `chunker.py` to cut them into readable bite-sized pieces. Then we store those pieces in ChromaDB (for concept search) and BM25 (for exact word search), and unite them in `hybrid_retriever.py`.",
-        "whyWrittenThisWay": "Building data ingestion and search before touching LLMs ensures you have a rock-solid, verifiable retrieval layer with zero hallucinations.",
-        "interviewTips": "Emphasize: 'I engineered the system in strict decoupled layers: raw data -> structural loader -> financial chunker -> dense/sparse hybrid index.'"
-      },
-      {
-        "sectionId": "story-sec-2",
-        "startLine": 36,
-        "endLine": 75,
-        "title": "Phase 3 & 4: Deterministic Math Tools, Pydantic State & Security Guardrails",
-        "code": "# STEP 6: Build src/tools/calculator.py & src/tools/market_data.py\n# Deterministic Python math: LLMs NEVER do arithmetic. Python Decimal computes YoY, Margins, and Efficiency.\nfrom src.tools.calculator import calculate_margin, calculate_efficiency_ratio\nmargin_res = calculate_margin(operating_income=123216.0, total_revenue=391035.0, metric_name=\"Operating Margin\")\n# Returns {\"margin_percentage\": 31.51, \"formula\": \"(123216.0 / 391035.0) * 100\", \"verified\": True}\n\n# STEP 7: Build src/schemas/financial_state.py\n# Defines the typed data contract (AgentState) that all agents pass to each other.\nfrom src.schemas.financial_state import AgentState, FinancialMetricItem, RiskFactorItem\n# AgentState holds: query, ticker, fiscal_year, retrieved_docs, calculated_metrics, risk_factors, audit_memo\n\n# STEP 8: Build src/guardrails/input_guardrails.py & src/guardrails/output_guardrails.py\n# Sandwich security boundary protecting against prompt injections on input, and masking PII on output.\nfrom src.guardrails.input_guardrails import InputGuardrail\nfrom src.guardrails.output_guardrails import OutputGuardrail\nguard_in = InputGuardrail()\nis_safe, sanitized_query = guard_in.validate_query(\"Analyze Morgan Stanley 2024 performance\")",
-        "lineByLine": [
-          "Line 2: `src/tools/calculator.py` - Built independently with pure Python functions to compute financial ratios with zero floating-point arithmetic errors.",
-          "Line 3: `src/tools/market_data.py` - Fetches live equity quotes via Yahoo Finance with institutional offline fallback snapshot caches.",
-          "Line 8: `src/schemas/financial_state.py` - Defines Pydantic v2 data models (`AgentState`, `FinancialMetricItem`, `RiskFactorItem`) ensuring type-safe agent communication.",
-          "Line 13: `src/guardrails/input_guardrails.py` - Blocks prompt injections, system prompt override attempts, and non-financial queries.",
-          "Line 14: `src/guardrails/output_guardrails.py` - Redacts sensitive PII (SSNs, credit card numbers) and validates final output schema."
-        ],
-        "beginnerConcepts": [
-          {
-            "term": "Tool-Augmented Generation (TAG)",
-            "explanation": "LLMs are notoriously bad at math (e.g. calculating 180683 / 391035). Instead of letting the LLM guess, the LLM calls a deterministic Python function (`calculator.py`) that returns exact numbers."
-          },
-          {
-            "term": "Sandwich Security Pattern",
-            "explanation": "Guarding the system at both ends: Input Guardrail validates incoming user prompts before LLM reasoning, and Output Guardrail sanitizes AI outputs before returning them to the user."
-          }
-        ],
-        "simpleExplanation": "We build math calculation tools in Python so the AI never makes arithmetic mistakes. We write Pydantic schemas so all agents speak the exact same data format. Then we build security guardrails to block malicious prompts and protect privacy.",
-        "whyWrittenThisWay": "Separating calculation logic into pure Python tools guarantees mathematical precision, while Pydantic schemas prevent corrupted state transfers across agent nodes.",
-        "interviewTips": "Interview highlight: 'We enforce the Sandwich Security Pattern and deterministic tool execution to guarantee 100% mathematical auditability.'"
-      },
-      {
-        "sectionId": "story-sec-3",
-        "startLine": 76,
-        "endLine": 120,
-        "title": "Phase 5, 6 & 7: LangGraph Multi-Agent Nodes, Ragas Benchmarks & UI Serving",
-        "code": "# STEP 9: Build src/agents/nodes.py\n# Implements the 4 specialist agent nodes:\n# Node 1: supervisor_node -> Resolves entity (AAPL, MS, MSFT) and calls hybrid_retriever.py\n# Node 2: quant_analyst_node -> Reads retrieved_docs and calls calculator.py\n# Node 3: risk_compliance_node -> Scans Item 1A and extracts structured RiskFactorItem list\n# Node 4: verifier_node -> Verifies numerical grounding against chunks & writes executive audit memo\n\n# STEP 10: Build src/agents/graph.py\n# Compiles the stateful LangGraph cyclical Directed Acyclic Graph (DAG) with MemorySaver checkpointing.\nfrom langgraph.graph import StateGraph, START, END\nworkflow = StateGraph(AgentState)\nworkflow.add_node(\"supervisor\", supervisor_node)\nworkflow.add_node(\"quant_analyst\", quant_analyst_node)\nworkflow.add_node(\"risk_compliance\", risk_compliance_node)\nworkflow.add_node(\"verifier\", verifier_node)\n\nworkflow.add_edge(START, \"supervisor\")\nworkflow.add_edge(\"supervisor\", \"quant_analyst\")\nworkflow.add_edge(\"quant_analyst\", \"risk_compliance\")\nworkflow.add_edge(\"risk_compliance\", \"verifier\")\nworkflow.add_edge(\"verifier\", END)\napp = workflow.compile()\n\n# STEP 11: Build src/evaluation/benchmark.py\n# Automated Ragas test suite measuring Faithfulness (96.4%), Answer Relevance, Context Precision & Recall.\n\n# STEP 12: Build User Interfaces (src/api/main.py & src/ui/app.py)\n# FastAPI exposes REST POST /analyze endpoint; Streamlit renders interactive multi-tab analyst console.",
-        "lineByLine": [
-          "Line 2: `src/agents/nodes.py` - Contains the business logic of each of the 4 agents.",
-          "Line 9: `src/agents/graph.py` - Uses LangGraph `StateGraph` to wire the nodes together with edges from `START` to `END`.",
-          "Line 18: `workflow.compile()` - Compiles the graph into a high-performance runnable executable.",
-          "Line 21: `src/evaluation/benchmark.py` - Automated LLM-as-a-Judge benchmark computing the 96.4% Faithfulness score.",
-          "Line 24: `src/api/main.py` & `src/ui/app.py` - Production delivery layers for backend microservices and Streamlit interactive dashboards."
-        ],
-        "beginnerConcepts": [
-          {
-            "term": "StateGraph DAG (Directed Acyclic Graph)",
-            "explanation": "A flow diagram in code where each node is a specialist agent. The graph controls the order of operations and passes state forward step by step."
-          },
-          {
-            "term": "MemorySaver Checkpointing",
-            "explanation": "Saves the state after every node executes. If a node fails, the system can resume from the last checkpoint without re-running previous agents."
-          }
-        ],
-        "simpleExplanation": "We write the 4 specialist agent functions in `nodes.py`. We connect them into a multi-agent workflow in `graph.py`. Finally, we evaluate the system with Ragas in `benchmark.py` and build FastAPI and Streamlit dashboards for users.",
-        "whyWrittenThisWay": "LangGraph multi-agent orchestration breaks complex financial analysis into specialized micro-steps, drastically outperforming single monolithic LLM prompts.",
-        "interviewTips": "Key architectural talking point: 'By decomposing financial analysis into 4 discrete LangGraph nodes, we achieve 96.4% grounding with sub-2 second response times.'"
-      }
-    ]
-  },
-  {
-    "id": "pipeline-execution-walkthrough",
-    "category": "12. End-to-End System Story & Pipeline Architecture",
-    "badge": "Runtime Walkthrough",
+    "badge": "Master Flowchart & Story",
     "badgeColor": "emerald",
-    "title": "Runtime Execution Walkthrough: The Morgan Stanley 10-K Journey",
-    "path": "data/raw/morgan_stanley_10k_2024.txt -> Streamlit UI -> Guardrails -> LangGraph -> Memo Output",
-    "summary": "This walkthrough traces the exact life of a user query through every single file in FinAgent. We follow a real-world example: dropping 'morgan_stanley_10k_2024.txt' into the project, selecting Morgan Stanley in the Streamlit UI, and asking: 'Analyze Morgan Stanley 2024 performance, CET1 capital ratio, and efficiency ratio.' You will see exactly which file activates at each millisecond, what data is transformed, and how the final 96.4% grounded memo is produced.",
+    "title": "End-to-End System Story, File Connections & Execution Flowchart",
+    "path": "data/raw/ -> src/ -> LangGraph Multi-Agents -> Streamlit UI (13-Step Flowchart & 7 Build Phases)",
+    "summary": "This master blueprint provides the complete, end-to-end architectural narrative and interactive flowchart of FinAgent. It unifies both the 13-Step Morgan Stanley 10-K Runtime Execution Flowchart (tracing data from raw arrival to UI rendering) and the 7 Chronological Build Phases (explaining from scratch which file is engineered first, why, and how they communicate via state contracts).",
     "keyConcepts": [
-      "End-to-End Runtime Query Lifecycle",
-      "Real-World Morgan Stanley 10-K Execution",
-      "State Mutation Across LangGraph Nodes",
-      "Deterministic Tool Invocation Trace",
-      "SEC Citation Chunk Matching & Grounding Check",
-      "UI Component Rendering Pipeline"
+      "13-Step End-to-End Execution Flowchart",
+      "7 Chronological System Build Phases",
+      "Inter-Module Communication via Typed State (AgentState)",
+      "Dual-Layer RAG Retrieval (ChromaDB + BM25 RRF Fusion)",
+      "Deterministic Tool Execution vs Probabilistic LLM Reasoning",
+      "96.4% Groundedness & Zero Hallucination Guarantee"
     ],
     "interviewQuestions": [
       {
         "question": "Walk me through the exact execution lifecycle when a user asks for Morgan Stanley's 2024 financial analysis in FinAgent.",
         "answer": "1. User submits prompt on Streamlit UI (app.py). 2. Input Guardrail (input_guardrails.py) verifies prompt safety. 3. Graph entrypoint (graph.py) initializes AgentState. 4. Supervisor Node (nodes.py) resolves ticker='MS' and calls hybrid_retriever.py to fetch top-6 SEC chunks from ChromaDB & BM25. 5. Quant Analyst Node (nodes.py) extracts reported figures and calls calculator.py for Efficiency Ratio (68.4%) and YoY growth. 6. Risk & Compliance Node (nodes.py) parses Item 1A for Basel III regulatory constraints and market volatility. 7. Verifier Node (nodes.py) cross-checks numbers against source chunks and formats the markdown report. 8. Output Guardrail (output_guardrails.py) masks PII. 9. Streamlit renders KPI cards, risk tables, and citation chunk inspectors."
+      },
+      {
+        "question": "If you had to build FinAgent from scratch today, in what exact sequence would you build the files and why?",
+        "answer": "We build in 7 chronological phases: 1) Data Layer (loader.py & chunker.py) to parse SEC 10-Ks and create structured Document objects; 2) Storage Layer (vector_store.py & bm25_retriever.py -> hybrid_retriever.py) to index chunks for dense/sparse RRF search; 3) Tooling Layer (calculator.py & market_data.py) for pure deterministic Python math; 4) Contract Layer (financial_state.py & guardrails) to define Pydantic schemas and security filters; 5) Multi-Agent Orchestration (nodes.py & graph.py) to wire the 4 specialized agents into a stateful LangGraph cyclical DAG; 6) Evaluation Layer (benchmark.py) for Ragas Groundedness testing; and 7) Presentation Layer (main.py & app.py) for FastAPI REST and Streamlit UI."
       }
     ],
     "sections": [
       {
-        "sectionId": "walk-sec-1",
+        "sectionId": "story-master-1",
         "startLine": 1,
-        "endLine": 45,
-        "title": "Hops 1 to 4: Ingestion, Hybrid Indexing, UI Submission & Security Gateway",
-        "code": "# HOP 1: Raw 10-K Arrival (data/raw/morgan_stanley_10k_2024.txt)\n# The SEC Form 10-K filing for Morgan Stanley (150+ pages) is stored in raw data directory.\n\n# HOP 2: Automated Parsing & Dual Indexing\n# 2A. src/ingestion/loader.py: Ingests file, detects ticker='MS', extracts Item 1A (Risks) & Item 8 (Financials).\n# 2B. src/ingestion/chunker.py: Slices text into 1,000-char chunks with table preservation.\n# 2C. src/rag/vector_store.py: Embeds chunks into ChromaDB with unique ID 'MS_2024_chunk_12'.\n# 2D. src/rag/bm25_retriever.py: Indexes financial tokens ($54,141, CET1, 15.2%) in inverted index.\n\n# HOP 3: User Action in Streamlit UI (src/ui/app.py)\n# User selects 'Morgan Stanley (MS)', '2024', and clicks 'Regulatory Capital & Basel III Audit'.\nuser_query = \"What is Morgan Stanley's 2024 CET1 regulatory capital ratio and efficiency ratio?\"\n\n# HOP 4: Input Guardrail Validation (src/guardrails/input_guardrails.py)\n# Gateway inspects query for prompt injections, DAN jailbreaks, or out-of-scope topics.\n# Result: PASSED (is_safe=True, sanitized_query=user_query)",
+        "endLine": 50,
+        "title": "Master Architecture: From Raw 10-K Ingestion to 96.4% Grounded UI Delivery",
+        "code": "# MASTER FINAGENT MULTI-AGENT EXECUTION TRACE:\n# 1. Ingestion:   data/raw/morgan_stanley_10k_2024.txt -> src/ingestion/loader.py (Item 1A & Item 8)\n# 2. Chunking:    src/ingestion/chunker.py (1,000-char chunks with table preservation)\n# 3. Storage:     src/rag/vector_store.py (ChromaDB dense vectors) + src/rag/bm25_retriever.py (sparse index)\n# 4. Hybrid RAG:  src/rag/hybrid_retriever.py (Dense + Sparse Reciprocal Rank Fusion RRF k=60)\n# 5. Security:    src/guardrails/input_guardrails.py (Sanitizes user prompt & blocks injections)\n# 6. Supervisor:  src/agents/nodes.py (supervisor_node locks ticker='MS' & retrieves top-6 chunks)\n# 7. Quant Math:  src/agents/nodes.py (quant_analyst_node calls src/tools/calculator.py -> 68.39% Efficiency)\n# 8. Risk Audit:  src/agents/nodes.py (risk_compliance_node audits Basel III 15.2% CET1 capital cushion)\n# 9. Verifier:    src/agents/nodes.py (verifier_node grounds claims, adds [Chunk MS_2024_0] citations & drafts memo)\n# 10. Privacy:    src/guardrails/output_guardrails.py (Redacts PII & verifies Pydantic schema)\n# 11. Dashboard:  src/ui/app.py (Streamlit renders KPI cards, formulas, risk tables & SEC chunk inspector)\n# 12. Benchmark:  src/evaluation/benchmark.py (Ragas scores 96.4% Faithfulness Grade A+)",
         "lineByLine": [
-          "Hop 1: Raw SEC filing `morgan_stanley_10k_2024.txt` is placed into `data/raw/`.",
-          "Hop 2A: `src/ingestion/loader.py` reads text, identifies `ticker='MS'`, `company='Morgan Stanley'`, `year='2024'`, and splits into SEC Items.",
-          "Hop 2B: `src/ingestion/chunker.py` creates table-preserved 1,000-char chunks.",
-          "Hop 2C: `src/rag/vector_store.py` computes dense embeddings and saves to ChromaDB with composite ID `MS_2024_chunk_12`.",
-          "Hop 2D: `src/rag/bm25_retriever.py` creates sparse BM25 inverted index for exact keyword matching.",
-          "Hop 3: `src/ui/app.py` captures analyst dropdown selections (`MS`, `2024`) and prompt.",
-          "Hop 4: `src/guardrails/input_guardrails.py` sanitizes input, ensuring prompt injection defenses pass before any LLM is called."
+          "Lines 1-4: Raw data preparation layer (loader.py, chunker.py, ChromaDB, BM25, hybrid_retriever.py).",
+          "Lines 5-6: Security perimeter and Supervisor RAG routing node.",
+          "Lines 7-9: Specialist multi-agent reasoning (Quant math, Risk auditing, Citation verification).",
+          "Lines 10-12: Enterprise output guardrails, Streamlit UI dashboard, and Ragas automated benchmark."
         ],
         "beginnerConcepts": [
           {
-            "term": "Zero-Cost Pre-Indexing",
-            "explanation": "Indexing happens ahead of time. When the user clicks search, embeddings and keyword indexes are already stored on disk, enabling sub-second search."
+            "term": "Unified Multi-Agent Architecture",
+            "explanation": "FinAgent integrates deterministic tools (Python math), semantic retrieval (ChromaDB + BM25), and cyclical multi-agent workflows (LangGraph) to eliminate financial hallucinations."
           }
         ],
-        "simpleExplanation": "The Morgan Stanley 10-K filing is parsed, chunked, and saved in our vector and keyword databases. When the user types a question in Streamlit, our input guardrail verifies that the question is safe and financial.",
-        "whyWrittenThisWay": "Validating inputs upfront prevents expensive LLM token consumption and protects against adversarial jailbreak attacks.",
-        "interviewTips": "Explain how input guardrails act as a defensive perimeter before LangGraph state graph invocation."
-      },
-      {
-        "sectionId": "walk-sec-2",
-        "startLine": 46,
-        "endLine": 95,
-        "title": "Hops 5 to 7: Supervisor Hybrid Retrieval, Quant Math Tools & Risk Audit",
-        "code": "# HOP 5: Supervisor Node (src/agents/nodes.py -> supervisor_node)\n# Resolves ticker='MS', fiscal_year='2024'.\n# Invokes src/rag/hybrid_retriever.py with metadata_filter={'ticker': 'MS'}.\n# Retrieves Top-6 SEC chunks (Chroma dense + BM25 sparse fused with RRF score).\n# State Updated: state['retrieved_docs'] = [Chunk MS_2024_12 (CET1), Chunk MS_2024_18 (Net Revenues)]\n\n# HOP 6: Quant Analyst Node (src/agents/nodes.py -> quant_analyst_node)\n# Reads reported figures from state['retrieved_docs']:\n# - Net Revenues = $54,141M | Non-interest Expenses = $37,025M | CET1 Ratio = 15.2%\n# Calls deterministic tools in src/tools/calculator.py:\n# -> calculate_efficiency_ratio(expenses=37025.0, revenue=54141.0) -> Returns 68.39%\n# -> calculate_margin(operating_income=17116.0, total_revenue=54141.0) -> Returns 31.61%\n# Calls src/tools/market_data.py -> Stock Price = $108.20 | Market Cap = $175.4B | P/E = 17.8x\n# State Updated: state['calculated_metrics'] = [FinancialMetricItem(name='Efficiency Ratio', value=68.39, ...)]\n\n# HOP 7: Risk & Compliance Node (src/agents/nodes.py -> risk_compliance_node)\n# Scans Item 1A chunks in state['retrieved_docs']. Extracts:\n# 1. Regulatory Capital Risk (Basel III Standardized CET1 15.2% vs 13.5% requirement) -> Severity: MEDIUM\n# 2. Market & Counterparty Credit Risk (Trading desk exposures & interest rate volatility) -> Severity: HIGH\n# 3. Investment Banking Advisory Pipeline Volatility -> Severity: MEDIUM\n# State Updated: state['risk_factors'] = [RiskFactorItem(...), RiskFactorItem(...)]",
-        "lineByLine": [
-          "Hop 5: `supervisor_node` queries `hybrid_retriever.py`, applying `metadata_filter={'ticker': 'MS'}` to prevent pulling Apple or Microsoft data. Top-6 chunks are stored in `state.retrieved_docs`.",
-          "Hop 6: `quant_analyst_node` extracts financial figures and executes Python `calculator.py` functions to compute Efficiency Ratio (68.39%) and Operating Margin (31.61%) with verified audit formulas.",
-          "Hop 6: `quant_analyst_node` queries `market_data.py` to pull live stock price ($108.20) and market valuation ($175.4B).",
-          "Hop 7: `risk_compliance_node` analyzes Item 1A disclosures, identifying Basel III capital constraints and credit exposure, assigning structured severity ratings (High/Medium/Low)."
-        ],
-        "beginnerConcepts": [
-          {
-            "term": "Efficiency Ratio in Banking",
-            "explanation": "Formula: (Non-Interest Expenses / Total Revenue) * 100. Lower is better. Morgan Stanley's 68.4% means it spends $0.68 to generate $1.00 of revenue."
-          },
-          {
-            "term": "Common Equity Tier 1 (CET1) Ratio",
-            "explanation": "A core measure of bank solvency under Basel III regulations comparing high-quality core capital against risk-weighted assets."
-          }
-        ],
-        "simpleExplanation": "The Supervisor retrieves Morgan Stanley's 10-K paragraphs. The Quant Analyst calculates bank efficiency and profit margins using exact Python math. The Risk node audits banking risks and regulatory requirements.",
-        "whyWrittenThisWay": "Specializing agents into Quant Math vs Risk Auditing ensures each agent performs one focused task with maximum precision and zero role confusion.",
-        "interviewTips": "Highlight banking domain knowledge: explain how FinAgent supports institution-specific ratios like Basel III CET1 and Bank Efficiency."
-      },
-      {
-        "sectionId": "walk-sec-3",
-        "startLine": 96,
-        "endLine": 140,
-        "title": "Hops 8 to 11: Citation Verification, Output Guardrail, UI Tabs & Benchmark",
-        "code": "# HOP 8: Citation Verifier Node (src/agents/nodes.py -> verifier_node)\n# Reads state['calculated_metrics'], state['risk_factors'], and state['retrieved_docs'].\n# Cross-references every numerical claim ($54,141M, 68.39%, 15.2%) against source chunks.\n# Attaches chunk citation badges (\ud83c\udd94 MS_2024_chunk_12 | \ud83c\udfaf RRF Score 0.0328).\n# Synthesizes executive institutional Markdown audit memo.\n# State Updated: state['audit_memo'] = \"# Institutional Financial Dossier: Morgan Stanley (MS)...\"\n\n# HOP 9: Output Guardrail Validation (src/guardrails/output_guardrails.py)\n# Scans audit memo for accidental PII leaks and validates against FinancialDossierResponse schema.\n# Result: PASSED (Zero PII detected, 100% Pydantic compliant).\n\n# HOP 10: Streamlit Dashboard Rendering (src/ui/app.py)\n# Streamlit displays the results across 4 high-contrast tabs:\n# - Tab 1: Executive Memo & KPI Cards ($54,141M Net Revenues, 68.4% Efficiency, 15.2% CET1)\n# - Tab 2: Audited Item 1A Risk Catalog with High/Medium severity color chips\n# - Tab 3: SEC Citations Inspector displaying exact source chunks in .sec-chunk-box containers\n# - Tab 4: Raw Multi-Agent JSON State Payload\n\n# HOP 11: Automated Benchmark Verification (src/evaluation/benchmark.py)\n# Ragas automated evaluator grades response:\n# - Faithfulness Score: 96.4% (All figures grounded in 10-K text) -> Institutional Grade A+",
-        "lineByLine": [
-          "Hop 8: `verifier_node` cross-checks every number against the retrieved SEC chunks and builds the markdown report with chunk citations.",
-          "Hop 9: `output_guardrails.py` performs PII redaction and validates JSON payload conformity.",
-          "Hop 10: `src/ui/app.py` renders high-contrast KPI cards, interactive tabs, audited risk tables, and preformatted SEC citation chunk inspectors.",
-          "Hop 11: `src/evaluation/benchmark.py` runs Ragas automated evaluation, confirming 96.4% Groundedness."
-        ],
-        "beginnerConcepts": [
-          {
-            "term": "Audit Trail & Citation Verification",
-            "explanation": "Every single output metric links directly back to a verified SEC chunk ID (`MS_2024_chunk_12`), providing an unalterable audit trail for Wall Street compliance."
-          },
-          {
-            "term": "Ragas 96.4% Groundedness Rating",
-            "explanation": "Quantitative proof that the AI output is 96.4% faithful to the official government filing, completely eliminating hallucinations."
-          }
-        ],
-        "simpleExplanation": "The Verifier checks all numbers against source paragraphs, the Output Guardrail protects privacy, Streamlit displays the beautiful dashboard, and Ragas mathematically confirms our 96.4% Groundedness score.",
-        "whyWrittenThisWay": "Concluding with verification and automated benchmarking guarantees institutional trustworthiness for investment banks and hedge funds.",
-        "interviewTips": "Conclude your interview walkthrough: 'This 11-hop lifecycle guarantees that from the moment a 10-K arrives to the final dashboard rendering, every metric is mathematically exact and 96.4% grounded.'"
+        "simpleExplanation": "This master module connects all files in FinAgent into one cohesive story. Explore the interactive flowchart and build phases above to see how data flows from raw SEC files to the final executive dashboard.",
+        "whyWrittenThisWay": "Consolidating the end-to-end architecture into one interactive master hub provides a clear, high-level map of the entire system for analysts and interviewers.",
+        "interviewTips": "Present FinAgent as an enterprise-grade financial AI system with 7 decoupled layers, 4 specialized LangGraph nodes, deterministic math tools, and 96.4% verified grounding."
       }
     ]
   }
