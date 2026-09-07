@@ -6,6 +6,7 @@ import FileStructureView from './components/FileStructureView';
 import ArchitectureView from './components/ArchitectureView';
 import InterviewView from './components/InterviewView';
 import SearchModal from './components/SearchModal';
+import PipelineStoryView from './components/PipelineStoryView';
 import { PROJECT_MODULES } from './data/projectData';
 
 export default function App() {
@@ -37,6 +38,8 @@ export default function App() {
     }
   };
 
+  const isStoryModule = activeModule?.category?.includes('12') || activeModule?.id?.startsWith('pipeline-');
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-blue-100 selection:text-blue-900 font-sans">
       {/* Top Header */}
@@ -62,7 +65,14 @@ export default function App() {
 
         {/* Content Area based on Active Tab */}
         {activeTab === 'code' && (
-          <FileViewer module={activeModule} />
+          isStoryModule ? (
+            <PipelineStoryView 
+              activeModuleId={activeModuleId} 
+              onSelectModule={handleSelectModule} 
+            />
+          ) : (
+            <FileViewer module={activeModule} />
+          )
         )}
 
         {activeTab === 'structure' && (
