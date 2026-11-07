@@ -34,3 +34,8 @@ data/vector_store/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Local Notes & Private Documentation
+docs/
+code_explanation/
+run explanantion.txt
