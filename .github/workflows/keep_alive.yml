@@ -2,7 +2,7 @@ name: Keep FinAgent Streamlit Alive
 
 on:
   schedule:
-    # Runs every 6 hours every day
+    # Runs every 6 hours
     - cron: '0 */6 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: Ping Streamlit App
         run: |
-          curl -L -s -o /dev/null -w "%{http_code}" https://finagentai.streamlit.app/
+          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -s -L --max-redirs 5 -o /dev/null -w "%{http_code}\n" https://finagentai.streamlit.app/ || true
